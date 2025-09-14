@@ -1,8 +1,10 @@
 import admin from "firebase-admin";
 import { readFileSync } from "fs";
+import dotenv from "dotenv";
 
+dotenv.config();
 const serviceAccount = JSON.parse(
-  readFileSync("./config/service-account.json", "utf8")
+  readFileSync(GOOGLE_APPLICATION_CREDENTIALS, "utf8")
 );
 
 admin.initializeApp({

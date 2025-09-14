@@ -117,7 +117,7 @@ Respond in JSON format:
     return [{ action: 'Error', reason: 'Unable to generate recommendations', expected_impact: '' }];
   }
 }
-
+ 
 
 async function getPrediction(req, res) {
   try {
