@@ -3,7 +3,6 @@ import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 dotenv.config();
 
-console.log('🚀 Cement Optimization Service Initialized');
 
 const forecastClient = new PredictionServiceClient({
   keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -49,7 +48,6 @@ const ai = new GoogleGenAI({
 });
 async function getRecommendations(predictedEnergy, plantData) {
   try {
-    console.log('⏳ Generating precise recommendations prompt...');
 
     const prompt = `
 You are an expert industrial AI specialized in cement plant optimization for JK Cement.
@@ -108,12 +106,10 @@ Respond in JSON format:
     try {
       return JSON.parse(response.text);
     } catch (parseError) {
-      console.warn('⚠️ Failed to parse recommendations as JSON. Returning raw text.');
       return response.text;
     }
 
   } catch (error) {
-    console.error('❌ Text Generation Error:', error);
     return [{ action: 'Error', reason: 'Unable to generate recommendations', expected_impact: '' }];
   }
 }
@@ -149,13 +145,8 @@ async function getPrediction(req, res) {
     const now = new Date();
     inputData.timestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}+0000`;
 
-    console.log('🕒 Current Timestamp:', inputData.timestamp);
-    console.log('⏳ Starting forecast prediction...');
     
     const predictedEnergy = await getForecast([inputData]);
-    console.log('✅ Predicted Energy:', predictedEnergy);
-
-    console.log('⏳ Generating AI recommendations...');
     const recommendations = await getRecommendations(predictedEnergy, inputData);
 
     res.json({
@@ -165,7 +156,6 @@ async function getPrediction(req, res) {
     });
 
   } catch (error) {
-    console.error('❌ Workflow Error:', error.message);
     res.status(500).json({ error: 'Prediction workflow failed', details: error.message });
   }
 }

@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 const serviceAccount = JSON.parse(
-  readFileSync(GOOGLE_APPLICATION_CREDENTIALS, "utf8")
+  readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, "utf8")
 );
 
 admin.initializeApp({
