@@ -6,7 +6,7 @@ import Login from './components/Login';
 
 const Home = lazy(() => import("./pages/home"));
 // const Profile = lazy(() => import("./pages/profile"));
-const Layout= lazy(() => import("./pages/layout"));
+const Layout= lazy(() => import("./pages/Layout"));
 const CementPlantRegister= lazy(() => import("./pages/RegisterCementPlant"));
 const CementPlant= lazy(() => import("./pages/cementPlant"));
 const Scenario=lazy(()=>import( './pages/Scenario'));
