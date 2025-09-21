@@ -14,6 +14,7 @@ import {
 ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
 
 export default function CO2Chart({ data, co2Target }) {
+
   const chartData = {
   
     labels: data.map(d => d.date), // month or year

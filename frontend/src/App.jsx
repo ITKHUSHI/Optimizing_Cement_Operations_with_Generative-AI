@@ -4,11 +4,10 @@ import {Route,Routes} from 'react-router-dom'
 import Navbar from './components/Navbar';
 import Login from './components/Login';
 
-const Home = lazy(() => import("./pages/home"));
-// const Profile = lazy(() => import("./pages/profile"));
+const Home = lazy(() => import("./pages/Home"));
 const Layout= lazy(() => import("./pages/Layout"));
 const CementPlantRegister= lazy(() => import("./pages/RegisterCementPlant"));
-const CementPlant= lazy(() => import("./pages/cementPlant"));
+const CementPlant= lazy(() => import("./pages/CementPlant"));
 const Scenario=lazy(()=>import( './pages/Scenario'));
 const Dashboard=lazy(()=>import( './pages/Dashboard'));
 function App() {
