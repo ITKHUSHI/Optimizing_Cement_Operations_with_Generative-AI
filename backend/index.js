@@ -1,10 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import bigquery from "./config/bigquery.js";
-import userRoutes from "./routes/user.route.js"
-import aiRoutes from "./routes/ai.route.js"
 import cementDataRoutes from "./routes/cement_data.route.js"
+import aiRoute from "./routes/ai.route.js"
 
 dotenv.config();
 
@@ -26,21 +24,9 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use("/api/users", userRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/predict-energy",cementDataRoutes)
+app.use("/api/cement",cementDataRoutes)
+app.use("/api/ai",aiRoute)
 
-app.get("/test-bigquery", async (req, res) => {
-  try {
-    const [datasets] = await bigquery.getDatasets();
-    res.json({
-      message: "✅ BigQuery Connected!",
-      datasets: datasets.map(d => d.id),
-    });
-  } catch (err) {
-    console.error("BigQuery error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

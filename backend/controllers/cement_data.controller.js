@@ -1,128 +1,96 @@
-import { PredictionServiceClient } from '@google-cloud/aiplatform';
-import { GoogleGenAI } from '@google/genai';
+import { getForecast,getRecommendations,calculatePredictedCO2 } from './ai.controller.js';
 import dotenv from 'dotenv';
+import bigquery from '../config/bigquery.js';
 dotenv.config();
 
 
-const forecastClient = new PredictionServiceClient({
-  keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-  apiEndpoint: 'us-central1-aiplatform.googleapis.com',
-});
+const registerCementPlant=async(req,res)=>{
+  try{
+    const {plant_name,location,capacity_tpd,password}=req.body
+    if(!password|| !plant_name || !location || !capacity_tpd){
+       return res.status(400).json({ error: 'All fields are required: plant_id, plant_name, location, capacity_tpd' })
+    }
+    const hashPassword=password.split('').reverse().join('') + 'hashed'; 
+    const id=Math.random()*123+12;
+    const newPlant={
+      plant_id:parseInt(id),
+      plant_name,
+      location,
+      capacity_tpd: parseFloat(capacity_tpd),
+      password:hashPassword,
+      created_at: new Date().toISOString() 
 
-const endpointPath = process.env.GCP_API_ENDPOINT;
+    }
+    await bigquery.dataset("cement_data").table("cement_plants").insert(newPlant);
+    delete newPlant.password;
 
-function createProtobufValue(value) {
-  return typeof value === 'number'
-    ? { numberValue: value }
-    : { stringValue: String(value) };
+    res.status(201).json({ message: 'Cement plant registered successfully', plant: newPlant});
+  }
+  catch(error){
+    res.status(500).json({ error: 'Failed to register cement plant', details: error });
+  }
 }
-
-async function getForecast(instances) {
+const loginCementPlant=async(req,res)=>{
   try {
-    const formattedInstances = instances.map(instance => {
-      const fields = Object.fromEntries(
-        Object.entries(instance).map(([key, value]) => [key, createProtobufValue(value)])
-      );
-      return { structValue: { fields } };
-    });
-
-    const request = { endpoint: endpointPath, instances: formattedInstances };
-    console.log('⏳ Sending request to forecast endpoint...');
-    
-    const [response] = await forecastClient.predict(request);
-
-    const prediction = response.predictions[0].structValue.fields.value.numberValue;
-    console.log('✅ Forecast response received:', prediction);
-
-    return prediction;
+    const{plant_id,password}=req.body;
+    if(!plant_id || !password){
+      return res.status(400).json({ error: 'Both plant_id and password are required' });
+    }
+    const hashPassword=password.split('').reverse().join('') + 'hashed';
+    const query=`SELECT * FROM \`${process.env.GCP_PROJECT_ID}.cement_data.cement_plants\` WHERE plant_id=${parseInt(plant_id)} AND password='${hashPassword}' LIMIT 1`;
+    const [cementPlant]=await bigquery.query({query})
+    if(cementPlant.length===0){
+      return res.status(401).json({ error: 'Cement plant not found' });
+    }
+    delete cementPlant[0].password;
+    return res.status(200).json({ message: 'Login successful', plant: cementPlant[0] });
   } catch (error) {
-    console.error('❌ Forecast prediction error:', JSON.stringify(error, null, 2));
-    throw new Error('Forecast prediction failed');
+    return res.status(500).json({ error: 'Login failed', details: error.message });
   }
 }
-
-const ai = new GoogleGenAI({
-  vertexai: true,
-  project: process.env.GCP_PROJECT_ID,
-  location: process.env.GCP_LOCATION || 'us-central1',
-});
-async function getRecommendations(predictedEnergy, plantData) {
+const getCementPlants = async (req, res) => {
   try {
 
-    const prompt = `
-You are an expert industrial AI specialized in cement plant optimization for JK Cement.
-Today’s predicted energy consumption is ${predictedEnergy} kWh.
-Current plant data snapshot:
-- Plant ID: ${plantData.plant_id}
-- Plant Name: ${plantData.plant_name}
-- Timestamp: ${plantData.timestamp}
-- Clinker Production (tpd): ${plantData.clinker_production_tpd}
-- Cement Production (tpd): ${plantData.cement_production_tpd}
-- Fuel Type: ${plantData.fuel_type}
-- Alternative Fuel Percentage: ${plantData.alt_fuel_pct}%
-- CO2 Emissions (tons): ${plantData.co2_emissions_tons}
-- Kiln Temperature (°C): ${plantData.kiln_temperature_c}
-- Raw Material Limestone (tpd): ${plantData.raw_material_limestone_tpd}
-- Raw Material Clay (tpd): ${plantData.raw_material_clay_tpd}
-- Raw Material Gypsum (tpd): ${plantData.raw_material_gypsum_tpd}
-- Electricity Cost (USD): ${plantData.electricity_cost_usd}
-- Maintenance Downtime (hr): ${plantData.maintenance_downtime_hr}
+    const plant_id = req.params.plant_id;
+    console.log(plant_id ,"plantid")
 
-Your goals:
-- Minimize Specific Power Consumption (target: 5-8% reduction).
-- Optimize Thermal Substitution Rate (target: increase by 10-15%).
-- Maintain product quality within ±2% variance.
-- Reduce downtime by 10-15%.
-
-Provide **precise, actionable steps**, supported by the data. Avoid generic jargon.
-For each recommendation, explain:
-1. What should be adjusted.
-2. Why it helps improve performance.
-3. The expected impact in measurable terms (e.g., reduce power by X kWh or cut emissions by Y%).
-
-Respond in JSON format:
-[
-  {
-    "action": "Optimize raw material mix",
-    "reason": "High clay-to-limestone ratio causes excess energy consumption.",
-    "expected_impact": "Reduce energy by ~3%, improve product quality stability."
-  },
-  {
-    "action": "Increase alternative fuel usage",
-    "reason": "Current alt fuel usage is low; increasing improves TSR and lowers cost.",
-    "expected_impact": "Increase TSR by ~12%, decrease fuel cost by ~5%."
-  }
-]  
-`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      temperature: 0.3,
-      maxOutputTokens: 600,
-    });
-
-    // Parse the response as structured JSON if possible
-    try {
-      return JSON.parse(response.text);
-    } catch (parseError) {
-      return response.text;
+    if (!plant_id) {
+      return res.status(400).json({ error: "plant_id is required" });
     }
 
-  } catch (error) {
-    return [{ action: 'Error', reason: 'Unable to generate recommendations', expected_impact: '' }];
-  }
-}
- 
+    const query = `
+      SELECT * FROM \`${process.env.GCP_PROJECT_ID}.cement_data.cement_plants\`
+      WHERE plant_id = ${plant_id}
+      LIMIT 1
+    `;
 
-async function getPrediction(req, res) {
+    const options = {
+      query: query,
+      params: { plant_id },
+    };
+
+    const [rows] = await bigquery.query(options);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Cement plant not found" });
+    }
+
+    const cementPlant = rows[0];
+    return res.status(200).json({ cementPlant });
+
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch cement plant data", details: error.message });
+  }
+};
+
+const  getPrediction=async(req, res)=> {
   try {
     const inputData = req.body;
     const requiredFields = [
       'plant_id', 'plant_name', 'clinker_production_tpd', 'cement_production_tpd',
-      'kiln_temperature_c', 'alt_fuel_pct', 'raw_material_limestone_tpd', 'raw_material_clay_tpd',
-      'raw_material_gypsum_tpd', 'electricity_cost_usd', 'maintenance_downtime_hr',
-      'fuel_type', 'co2_emissions_tons'
+      'kiln_temperature_c', 'alt_fuel_pct', 'raw_material_limestone_tpd',
+      'raw_material_clay_tpd', 'raw_material_gypsum_tpd',
+      'electricity_cost_usd', 'maintenance_downtime_hr', 'fuel_type'
     ];
 
     for (const field of requiredFields) {
@@ -132,32 +100,197 @@ async function getPrediction(req, res) {
     }
 
     const numericFields = [
-      'raw_material_limestone_tpd', 'raw_material_clay_tpd', 'raw_material_gypsum_tpd',
-      'electricity_cost_usd', 'maintenance_downtime_hr', 'co2_emissions_tons'
+     'raw_material_limestone_tpd', 'raw_material_clay_tpd', 'raw_material_gypsum_tpd',
+      'electricity_cost_usd', 'maintenance_downtime_hr'
     ];
     numericFields.forEach(field => {
       inputData[field] = parseFloat(inputData[field]);
       if (isNaN(inputData[field])) {
-        throw new Error(`Invalid numeric value for field: ${field}`);
+        return res.status(400).json(`Invalid numeric value for field: ${field}`);
       }
     });
 
     const now = new Date();
     inputData.timestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}+0000`;
 
-    
     const predictedEnergy = await getForecast([inputData]);
+
+    const predictedCO2 = calculatePredictedCO2(predictedEnergy, inputData.fuel_type, inputData.alt_fuel_pct);
+
     const recommendations = await getRecommendations(predictedEnergy, inputData);
 
-    res.json({
+   return res.status(200).json({
       predictedEnergy,
-      predictedCO2: inputData.co2_emissions_tons,
+      predictedCO2,
       recommendations
     });
-
   } catch (error) {
-    res.status(500).json({ error: 'Prediction workflow failed', details: error.message });
+    return res.status(500).json({ error: 'Prediction workflow failed', details: error.message });
   }
 }
 
-export { getPrediction };
+const normalizeRecords = (records, plantId) => {
+  return records.map((r) => ({
+      plant_id: parseInt(plantId),                // INTEGER
+      plant_name: r.plant_name ||null,           // STRING
+      timestamp: new Date(r.timestamp).toISOString(), // TIMESTAMP
+      clinker_production_tpd: r. clinker_production_tpd ? parseInt(r. clinker_production_tpd) : null,
+      cement_production_tpd: r.cement_production_tpd ? parseInt(r.cement_production_tpd) : null,
+      energy_consumption_kwh: r. energy_consumption_kwh ? parseInt(r. energy_consumption_kwh) : null,
+      fuel_type: r.fuel_type || null,
+      alt_fuel_pct: r.alt_fuel_pct ? parseInt(r.alt_fuel_pct) : null,
+      co2_emissions_tons: r.co2_emissions_tons ? parseFloat(r.co2_emissions_tons) : null,
+      kiln_temperature_c: r.kiln_temperature_c ? parseInt(r.kiln_temperature_c) : null,
+      raw_material_limestone_tpd: r.raw_material_limestone_tpd ? parseFloat(r.raw_material_limestone_tpd) : null,
+      raw_material_clay_tpd: r.raw_material_clay_tpd ? parseFloat(r.raw_material_clay_tpd) : null,
+      raw_material_gypsum_tpd: r.raw_material_gypsum_tpd ? parseFloat(r.raw_material_gypsum_tpd) : null,
+      electricity_cost_usd: r.electricity_cost_usd ? parseFloat(r.electricity_cost_usd) : null,
+      maintenance_downtime_hr: r.maintenance_downtime_hr ? parseFloat(r.maintenance_downtime_hr) : null,  }));
+};
+
+const addRecords = async (req, res) => { 
+  try {
+    const { records } = req.body;
+    const plant_id = req.params.plant_id;
+    console.log(records);
+
+    if (!plant_id) {
+      return res.status(400).json({ error: "plantId is required" });
+    }
+
+    if (!records || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ error: "Records array is required" });
+    }
+
+    // Required fields
+   
+    const normalize= normalizeRecords(records,plant_id)
+      console.log(normalize)
+    // Insert into BigQuery
+    await bigquery.dataset("cement_data").table("plant_performance").insert(normalize);
+
+    return res.status(200).json({ message: "Records added successfully", count: normalize.length });
+  } catch (err) {
+    console.error("BigQuery Insert Error:", err);
+    return res.status(500).json({ error: "Failed to insert records into BigQuery" });
+  }
+};
+
+
+const getDashboardData = async (req, res) => {
+  try {
+    const {plant_id }=req.params;
+
+    if (!plant_id) return res.status(400).json({ error: "plantId is required" });
+
+    // Check if plant exists
+    const checkQuery = `
+      SELECT COUNT(*) AS count
+      FROM \`${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\`
+      WHERE plant_id = ${plant_id}
+    `;
+
+    const [checkResult] = await bigquery.query({
+      query: checkQuery,
+       plant_id: plant_id ,
+    });
+
+    if (checkResult[0].count === 0) {
+      return res.status(404).json({ error: "Plant ID not found" });
+    }
+
+    // Query for current year monthly + previous 4 years yearly averages
+
+
+
+
+const query = `
+WITH years_count AS (
+  SELECT
+    COUNT(DISTINCT EXTRACT(YEAR FROM timestamp)) AS total_years
+  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
+  WHERE plant_id = ${plant_id}
+),
+
+-- Year-wise averages (last 5 years)
+yearly_avg AS (
+  SELECT
+    EXTRACT(YEAR FROM timestamp) AS year,
+    NULL AS month,
+    AVG(clinker_production_tpd) AS clinker_production_avg,
+    AVG(cement_production_tpd) AS cement_production_avg,
+    AVG(kiln_temperature_c) AS kiln_temp_avg,
+    AVG(alt_fuel_pct) AS alt_fuel_avg,
+    AVG(energy_consumption_kwh) AS energy_avg,
+    AVG(co2_emissions_tons) AS co2_avg,
+    ANY_VALUE(fuel_type) AS most_common_fuel
+  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
+  WHERE plant_id = ${plant_id}
+    AND EXTRACT(YEAR FROM timestamp) >= EXTRACT(YEAR FROM CURRENT_DATE()) - 4
+  GROUP BY year
+  ORDER BY year ASC
+  limit 5
+),
+
+-- Month-wise averages for the current year
+monthly_avg AS (
+  SELECT
+    EXTRACT(YEAR FROM timestamp) AS year,
+    EXTRACT(MONTH FROM timestamp) AS month,
+    AVG(clinker_production_tpd) AS clinker_production_avg,
+    AVG(cement_production_tpd) AS cement_production_avg,
+    AVG(kiln_temperature_c) AS kiln_temp_avg,
+    AVG(alt_fuel_pct) AS alt_fuel_avg,
+    AVG(energy_consumption_kwh) AS energy_avg,
+    AVG(co2_emissions_tons) AS co2_avg,
+    ANY_VALUE(fuel_type) AS most_common_fuel
+  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
+  WHERE plant_id = ${plant_id}
+    AND EXTRACT(YEAR FROM timestamp) = EXTRACT(YEAR FROM CURRENT_DATE())
+  GROUP BY year, month
+  ORDER BY month ASC
+)
+
+SELECT * 
+FROM monthly_avg
+WHERE (SELECT total_years FROM years_count) = 1
+UNION ALL
+SELECT * 
+FROM yearly_avg
+WHERE (SELECT total_years FROM years_count) > 1
+ORDER BY year ASC, month ASC;
+`;
+
+
+
+
+    const [rows] = await bigquery.query({
+      query,
+      plant_id ,
+    });
+    // Format for charts
+   return res.status(200).json({
+      labels: rows.map(r => r.month ? `${r.year}-${r.month}` : `${r.year}`), // x-axis
+      clinkerProduction: rows.map(r => r.clinker_production_avg),
+      cementProduction: rows.map(r => r.cement_production_avg),
+      kilnTemp: rows.map(r => r.kiln_temp_avg),
+      altFuel: rows.map(r => r.alt_fuel_avg),
+      energyConsumption: rows.map(r => r.energy_avg),
+      co2Emissions: rows.map(r => r.co2_avg),
+       fuel_type: rows.map(r => r.most_common_fuel),
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch dashboard data" });
+  }
+};
+
+
+
+export {registerCementPlant,
+   getPrediction ,
+   getCementPlants,
+   loginCementPlant,
+   addRecords,
+   getDashboardData
+  };

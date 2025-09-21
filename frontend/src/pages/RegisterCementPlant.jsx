@@ -3,9 +3,11 @@ import axios from "axios";
 import { APIURL } from "../../utils";
 import { useNavigate ,Link} from "react-router-dom";
 
-export default function Login() {
+export default function CementPlantRegister() {
   const [inputs, setInputs] = useState({
-    plant_id: null,
+    plant_name: "",
+    location: "",
+    capacity_tpd:"",
     password:""
   });
  const navigate=useNavigate();
@@ -18,24 +20,22 @@ export default function Login() {
     setInputs({ ...inputs, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async () => {
+  const handleRegister = async () => {
     setIsLoading(true);
     setSuccessMsg("");
     setErrorMsg("");
 
     try {
-      const res = await axios.post(`${APIURL}/api/cement/login-cement-plant`, inputs, {
+      const res = await axios.post(`${APIURL}/api/cement/register-cement-plant`, inputs, {
         headers: { "Content-Type": "application/json" },
-        withCredentials: true,
       });
-      console.log("✅ Login response:", res.data);
       setSuccessMsg(res.data.message);
+      navigate('/cement-plant');
       localStorage.setItem('plantData',JSON.stringify(res.data.plant));
       localStorage.setItem('plantId',JSON.stringify(res.data.plant.plant_id));
-      navigate('/cement-plant');
-      setInputs({ plant_id: "", password: "" });
+
+      setInputs({ plant_id: "", plant_name: "", location: "", capacity_tpd: "" });
     } catch (err) {
-      console.error("Registration error:", err);
       const message = err.response?.data?.error || "Failed to register plant.";
       setErrorMsg(message);
     } finally { 
@@ -60,7 +60,9 @@ export default function Login() {
 
         <div className="space-y-4">
           {[
-            { label: "Plant Id", name: "plant_id", type: "text" },
+            { label: "Plant Name", name: "plant_name", type: "text" },
+            { label: "Location", name: "location", type: "text" },
+            { label: "Capacity (TPD)", name: "capacity_tpd", type: "number" },
             { label: "password", name: "password", type: "password" },
           ].map((field) => (
             <div key={field.name}>
@@ -77,7 +79,7 @@ export default function Login() {
         </div>
 
         <button
-          onClick={handleLogin}
+          onClick={handleRegister}
           disabled={isLoading}
           className={`mt-6 w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg font-semibold transition-all duration-300 ${
             isLoading ? "opacity-50 cursor-not-allowed" : "hover:from-indigo-600 hover:to-blue-500"
@@ -89,13 +91,14 @@ export default function Login() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
               </svg>
-              <span>Login...</span>
+              <span>Registering...</span>
             </div>
           ) : (
-            "Login Plant"          )}
+            "Register Plant"
+          )}
         </button>
         <div className="text-center mt-4">
-          <p>Not  have an account <Link to={'/register-cement-plant'} className="text-blue-500" >Register</Link></p>
+          <p>Already have an account <Link to={'/login-cement-plant'} className="text-blue-500" >Login</Link></p>
         </div>
       </div>
     </div>

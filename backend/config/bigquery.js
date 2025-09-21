@@ -8,19 +8,19 @@ const bigquery = new BigQuery({
 });
 
 // Get plant data (for display)
- async function getPlantData() {
-  const query = `SELECT * FROM \`${process.env.CEMENT_PLANT_DATASET_TABLE}\` LIMIT 100`;
+ async function getPlantData(tableName) {
+  const query = `SELECT * FROM \`${process.env.CEMENT_PLANT_DATASET_TABLE}.${tableName}\` LIMIT 100`;
   const [rows] = await bigquery.query(query);
   return rows;
 }
 
 // Insert prediction result (after model predicts)
- async function insertPrediction(predictionData) {
+ async function insertData(Data,dataset,tableName) {
   await bigquery
-    .dataset('your_dataset')
-    .table('predictions')
-    .insert([predictionData]);
+    .dataset(dataset)
+    .table(tableName)
+    .insert([Data]);
 }
-
+ 
 export default bigquery;
-export { getPlantData,insertPrediction };
+export { getPlantData,insertData };

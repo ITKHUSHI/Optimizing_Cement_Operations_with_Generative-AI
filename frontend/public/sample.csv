@@ -1,0 +1,16 @@
+plant_name	timestamp	clinker_production_tpd	cement_production_tpd	energy_consumption_kwh	fuel_type	alt_fuel_pct	co2_emissions_tons	kiln_temperature_c	raw_material_limestone_tpd	raw_material_clay_tpd	raw_material_gypsum_tpd	electricity_cost_usd	maintenance_downtime_hr
+dummy Cement plant - Rajasthan	2025-05-27 23:00:00 UTC	4910	6099	93951	Pet Coke	9	5095.84	1437	7627.62	1417.0	311.18	7329.42	1.79
+dummy Cement plant - Rajasthan	2025-10-09 15:00:00 UTC	6029	6971	125177	Pet Coke	5	5836.2	1449	9145.09	1741.39	259.29	9269.46	1.61
+dummy Cement plant - Rajasthan	2025-10-17 02:00:00 UTC	5293	6652	93592	Pet Coke	4	4980.83	1531	7582.26	1583.63	245.48	8232.14	0.85
+dummy Cement plant - Rajasthan	2025-03-12 23:00:00 UTC	5326	6638	97314	Pet Coke	8	5131.7	1546	8421.76	1465.58	254.94	7852.64	0.91
+dummy Cement plant - Rajasthan	2025-04-23 18:00:00 UTC	5247	5959	94132	Pet Coke	11	5153.88	1468	7577.21	1353.52	252.83	7479.84	1.45
+dummy Cement plant - Rajasthan	2025-02-20 23:00:00 UTC	4490	5400	89670	Pet Coke	13	4760.44	1457	6779.97	1377.82	233.53	7439.47	1.74
+dummy Cement plant - Rajasthan	2025-08-09 18:00:00 UTC	5485	6677	118497	Pet Coke	17	5637.15	1486	8908.79	1440.23	288.87	9301.66	1.29
+dummy Cement plant - Rajasthan	2025-03-12 00:00:00 UTC	4598	5439	85901	Pet Coke	1	4135.76	1439	6617.74	1317.39	266.71	6660.3	1.87
+dummy Cement plant - Rajasthan	2025-08-11 18:00:00 UTC	6022	6643	121192	Pet Coke	6	5341.09	1448	9269.62	1810.59	274.7	9336.5	1.46
+dummy Cement plant - Rajasthan	2025-06-15 07:00:00 UTC	4182	5402	85755	Pet Coke	0	3935.64	1451	5880.07	1222.92	192.98	6797.76	0.71
+dummy Cement plant - Rajasthan	2025-03-09 09:00:00 UTC	4123	5709	93263	Pet Coke	17	4456.88	1455	5934.1	1180.21	208.58	7381.78	0.18
+dummy Cement plant - Rajasthan	2025-05-09 19:00:00 UTC	5519	7044	97311	Pet Coke	0	5050.51	1491	7740.38	1659.49	246.74	7824.21	0.75
+dummy Cement plant - Rajasthan	2025-01-27 20:00:00 UTC	4132	5512	76033	Pet Coke	22	4340.06	1398	6546.21	1133.08	242.31	6359.1	0.46
+dummy Cement plant - Rajasthan	2025-06-11 05:00:00 UTC	5647	6915	127399	Pet Coke	19	5531.38	1434	9192.49	1728.96	255.36	9840.58	1.02
+dummy Cement plant - Rajasthan	2025-04-10 02:00:00 UTC	4422	5761	79433	Pet Coke	10	4482.66	1548	7361.28	1266.94	282.27	6853.07	0.59
