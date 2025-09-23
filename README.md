@@ -52,17 +52,17 @@ npm install
 cd backend
 npm install
 
-backend env file
-PORT=8000
-CORS_ORIGIN="cors origin"
-GCP_PROJECT_ID="your project id"
-GCP_API_ENDPOINT=" your project end point"
-GCP_LOCATION =  'location'
-GOOGLE_APPLICATION_CREDENTIALS="your configue file"
-CEMENT_PLANT_DATASET_TABLE="Table name"
+# backend env file
+-PORT=8000
+-CORS_ORIGIN="cors origin"
+-GCP_PROJECT_ID="your project id"
+-GCP_API_ENDPOINT=" your project end point"
+-GCP_LOCATION =  'location'
+-GOOGLE_APPLICATION_CREDENTIALS="your configue file"
+-CEMENT_PLANT_DATASET_TABLE="Table name"
 
- Frontend env file
- VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
+ # Frontend env file
+ -VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
 
 
  <img width="1891" height="870" alt="Screenshot 2025-09-19 162143" src="https://github.com/user-attachments/assets/9386d02f-bdd9-45ca-9197-fb71def347fc" />
