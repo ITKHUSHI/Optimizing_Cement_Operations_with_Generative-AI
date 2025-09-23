@@ -4,8 +4,8 @@
 
 ---
 Live Preview :- https://optimizing-cement-operations-with-uc6o.onrender.com/
-## Features
 
+## Features
 ### 1. Dashboard
 - Central hub to analyze company and plant data.
 - Visualizes key metrics: energy consumption, CO₂ emissions, and production data.
@@ -40,9 +40,8 @@ Live Preview :- https://optimizing-cement-operations-with-uc6o.onrender.com/
 ## Installation & Setup
 
 1. Clone the repository
-2. 
-git clone https://github.com/ITKHUSHI/Optimizing_Cement_Operations_with_Generative-AI
-cd SmartCemAI
+2. git clone https://github.com/ITKHUSHI/Optimizing_Cement_Operations_with_Generative-AI
+3. cd SmartCemAI
 
 
 # Frontend
@@ -62,8 +61,10 @@ GCP_LOCATION =  'location'
 GOOGLE_APPLICATION_CREDENTIALS="your configue file"
 CEMENT_PLANT_DATASET_TABLE="Table name"
 
+ Frontend env file
+ VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
+
+
  <img width="1891" height="870" alt="Screenshot 2025-09-19 162143" src="https://github.com/user-attachments/assets/9386d02f-bdd9-45ca-9197-fb71def347fc" />
 <img width="1883" height="888" alt="Screenshot 2025-09-21 172238" src="https://github.com/user-attachments/assets/77abc0d8-ff04-40e8-a0df-c35ab18adcbe" />
- Frontend env
-VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
 
