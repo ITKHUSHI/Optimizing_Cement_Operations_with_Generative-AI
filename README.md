@@ -64,7 +64,7 @@ npm install
 
  ## frontend env file
  -VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
-
+```
 
  <img width="1891" height="870" alt="Screenshot 2025-09-19 162143" src="https://github.com/user-attachments/assets/9386d02f-bdd9-45ca-9197-fb71def347fc" />
 <img width="1883" height="888" alt="Screenshot 2025-09-21 172238" src="https://github.com/user-attachments/assets/77abc0d8-ff04-40e8-a0df-c35ab18adcbe" />
