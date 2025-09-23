@@ -5,6 +5,7 @@
 ---
 Live Preview :- https://optimizing-cement-operations-with-uc6o.onrender.com/
 
+```
 ## Features
 ### 1. Dashboard
 - Central hub to analyze company and plant data.
@@ -52,16 +53,16 @@ npm install
 cd backend
 npm install
 
-# backend env file
--PORT=8000
--CORS_ORIGIN="cors origin"
--GCP_PROJECT_ID="your project id"
--GCP_API_ENDPOINT=" your project end point"
--GCP_LOCATION =  'location'
--GOOGLE_APPLICATION_CREDENTIALS="your configue file"
--CEMENT_PLANT_DATASET_TABLE="Table name"
+## backend env file
+-PORT=8000   
+-CORS_ORIGIN="cors origin"   
+-GCP_PROJECT_ID="your project id"   
+-GCP_API_ENDPOINT=" your project end point"  
+-GCP_LOCATION =  'location'   
+-GOOGLE_APPLICATION_CREDENTIALS="your configue file"  
+-CEMENT_PLANT_DATASET_TABLE="Table name"  
 
- # Frontend env file
+ ## frontend env file
  -VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
 
 
