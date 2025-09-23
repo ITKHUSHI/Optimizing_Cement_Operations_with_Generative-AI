@@ -3,7 +3,7 @@
 **SmartCemAI** is an AI-powered platform designed to help cement plants optimize operations, reduce energy consumption, and minimize CO₂ emissions. The platform provides actionable insights, predictive analysis, and scenario simulations using **Vertex AI** and advanced machine learning techniques.
 
 ---
-
+Live Preview :- https://optimizing-cement-operations-with-uc6o.onrender.com/
 ## Features
 
 ### 1. Dashboard
@@ -29,18 +29,18 @@
 ---
 
 ## Tech Stack
-- **Frontend:** React, Tailwind CSS  
-- **Backend:** Node.js, Express  
-- **Database:** BigQuery  
-- **AI/ML:** Vertex AI, Google Cloud  
-- **Realtime Updates:** Socket.IO (optional)  
+- Frontend: React, Tailwind CSS  
+- Backend: Node.js, Express  
+- Database: BigQuery  
+- AI/ML: Vertex AI, Google Cloud  
+- Realtime Updates:** Socket.IO (optional)  
 
 ---
 
 ## Installation & Setup
 
-1. **Clone the repository**
-```bash
+1. Clone the repository
+2. 
 git clone https://github.com/ITKHUSHI/Optimizing_Cement_Operations_with_Generative-AI
 cd SmartCemAI
 
@@ -53,9 +53,6 @@ npm install
 cd backend
 npm install
 
-git clone https://github.com/yourusername/SmartCemAI.git
-cd SmartCemAI
-
 backend env file
 PORT=8000
 CORS_ORIGIN="cors origin"
@@ -65,8 +62,8 @@ GCP_LOCATION =  'location'
 GOOGLE_APPLICATION_CREDENTIALS="your configue file"
 CEMENT_PLANT_DATASET_TABLE="Table name"
 
- F<img width="1891" height="870" alt="Screenshot 2025-09-19 162143" src="https://github.com/user-attachments/assets/9386d02f-bdd9-45ca-9197-fb71def347fc" />
+ <img width="1891" height="870" alt="Screenshot 2025-09-19 162143" src="https://github.com/user-attachments/assets/9386d02f-bdd9-45ca-9197-fb71def347fc" />
 <img width="1883" height="888" alt="Screenshot 2025-09-21 172238" src="https://github.com/user-attachments/assets/77abc0d8-ff04-40e8-a0df-c35ab18adcbe" />
-rontend env
-VITE_API_URL=http://localhost:8000
+ Frontend env
+VITE_API_URL="your cors origin link(exmple: http://localhost:5173/) "
 
