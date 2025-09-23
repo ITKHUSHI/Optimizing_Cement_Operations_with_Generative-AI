@@ -8,7 +8,7 @@ function Home() {
 	 <div className=' text-white  w-full'>
     
 
-         <Suspense fallback={<div className="text-center mt-10">Loading Dashboard...</div>}>
+         <Suspense fallback={<div className="text-center mt-10">Loading Energy prediction ...</div>}>
         <div className='mt-20 p-4'>
            
         <EnergyPrediction />

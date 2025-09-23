@@ -16,6 +16,8 @@ ChartJS.register(Title, Tooltip, Legend, CategoryScale, LinearScale, PointElemen
 export default function EnergyEfficiencyChart({ data }) {
   const chartData = {
     labels: data.map(d => d.date),
+     labels: data.map(d => d.year), // month or year
+
     datasets: [
       {
         label: "Energy per Ton (kWh/TPD)",

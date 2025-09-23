@@ -3,6 +3,7 @@ import './App.css'
 import {Route,Routes} from 'react-router-dom' 
 import Navbar from './components/Navbar';
 import Login from './components/Login';
+import { Toaster } from 'react-hot-toast';
 
 const Home = lazy(() => import("./pages/Home"));
 const Layout= lazy(() => import("./pages/Layout"));
@@ -15,6 +16,7 @@ function App() {
   return (
     <>
     <Navbar />
+    <Toaster/>
      <Routes>
       
         <Route path='/' element={<Layout/>}/>

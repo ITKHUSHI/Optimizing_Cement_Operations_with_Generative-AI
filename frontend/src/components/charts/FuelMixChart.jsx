@@ -15,6 +15,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 export default function FuelMixChart({ data }) {
   const chartData = {
     labels: data.map(d => d.date),
+    labels: data.map(d => d.year), // month or year
+
     datasets: [
       {
         label: "Alternative Fuel (%)",

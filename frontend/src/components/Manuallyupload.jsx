@@ -3,19 +3,20 @@ import React, { useState } from "react";
 const ManualUpload = ({ onSubmit , isLoading }) => {
   const [records, setRecords] = useState([
     {
-      timestamp: "",
-      clinkerProduction: "",
-      cementProduction: "",
-      kilnTemp: "",
-      altFuel: "",
-      energy: "",
-      co2: "",
-      fuelType: "",
-      limestone: "",
-      clay: "",
-      gypsum: "",
-      electricityCost: "",
-      maintenanceDowntime: "",
+        plant_name:"",
+        timestamp: "",
+        clinker_production_tpd: "",
+        cement_production_tpd: "",
+        kiln_temperature_c: "",
+        alt_fuel_pct: "",
+        energy_consumption_kwh: "",
+        co2_emissions_tons: "",
+        fuel_type: "",
+        raw_material_limestone_tpd: "",
+        raw_material_clay_tpd: "",
+        raw_material_gypsum_tpd: "",
+        electricity_cost_usd: "",
+        maintenance_downtime_hr: "",
     },
   ]);
 
@@ -29,19 +30,20 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
     setRecords([
       ...records,
       {
+        plant_name:"",
         timestamp: "",
-        clinkerProduction: "",
-        cementProduction: "",
-        kilnTemp: "",
-        altFuel: "",
-        energy: "",
-        co2: "",
-        fuelType: "",
-        limestone: "",
-        clay: "",
-        gypsum: "",
-        electricityCost: "",
-        maintenanceDowntime: "",
+        clinker_production_tpd: "",
+        cement_production_tpd: "",
+        kiln_temperature_c: "",
+        alt_fuel_pct: "",
+        energy_consumption_kwh: "",
+        co2_emissions_tons: "",
+        fuel_type: "",
+        raw_material_limestone_tpd: "",
+        raw_material_clay_tpd: "",
+        raw_material_gypsum_tpd: "",
+        electricity_cost_usd: "",
+        maintenance_downtime_hr: "",
       },
     ]);
   };
@@ -55,6 +57,15 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
       <h2 className="text-xl font-semibold mb-4">Manual Entry</h2>
       {records.map((record, index) => (
         <div key={index} className="flex flex-wrap gap-2 mb-2 items-center border-b pb-2">
+          <div className="flex flex-col">
+            <label>plant name</label>
+            <input
+              type="text"
+              className="border rounded p-1 w-36"
+              value={record.plant_name}
+              onChange={(e) => handleChange(index, "plant_name", e.target.value)}
+            />
+          </div>
           <div className="flex flex-col">
             <label>Date</label>
             <input
@@ -70,8 +81,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-36"
-              value={record.clinkerProduction}
-              onChange={(e) => handleChange(index, "clinkerProduction", e.target.value)}
+              value={record.clinker_production_tpd}
+              onChange={(e) => handleChange(index, "clinker_production_tpd", e.target.value)}
             />
           </div>
 
@@ -80,8 +91,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-36"
-              value={record.cementProduction}
-              onChange={(e) => handleChange(index, "cementProduction", e.target.value)}
+              value={record.cement_production_tpd}
+              onChange={(e) => handleChange(index, "cement_production_tpd", e.target.value)}
             />
           </div>
 
@@ -90,8 +101,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.kilnTemp}
-              onChange={(e) => handleChange(index, "kilnTemp", e.target.value)}
+              value={record.kiln_temperature_c}
+              onChange={(e) => handleChange(index, "kiln_temperature_c", e.target.value)}
             />
           </div>
 
@@ -100,8 +111,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.altFuel}
-              onChange={(e) => handleChange(index, "altFuel", e.target.value)}
+              value={record.alt_fuel_pct}
+              onChange={(e) => handleChange(index, "alt_fuel_pct", e.target.value)}
             />
           </div>
 
@@ -110,8 +121,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.energy}
-              onChange={(e) => handleChange(index, "energy", e.target.value)}
+              value={record.energy_consumption_kwh}
+              onChange={(e) => handleChange(index, "energy_consumption_kwh", e.target.value)}
             />
           </div>
 
@@ -120,8 +131,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.co2}
-              onChange={(e) => handleChange(index, "co2", e.target.value)}
+              value={record.co2_emissions_tons}
+              onChange={(e) => handleChange(index, "co2_emissions_tons", e.target.value)}
             />
           </div>
 
@@ -130,8 +141,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="text"
               className="border rounded p-1 w-32"
-              value={record.fuelType}
-              onChange={(e) => handleChange(index, "fuelType", e.target.value)}
+              value={record.fuel_type}
+              onChange={(e) => handleChange(index, "fuel_type", e.target.value)}
             />
           </div>
 
@@ -140,8 +151,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.limestone}
-              onChange={(e) => handleChange(index, "limestone", e.target.value)}
+              value={record.raw_material_limestone_tpd}
+              onChange={(e) => handleChange(index, "raw_material_limestone_tpd", e.target.value)}
             />
           </div>
 
@@ -150,8 +161,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.clay}
-              onChange={(e) => handleChange(index, "clay", e.target.value)}
+              value={record.raw_material_clay_tpd}
+              onChange={(e) => handleChange(index, "raw_material_clay_tpd", e.target.value)}
             />
           </div>
 
@@ -160,8 +171,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.gypsum}
-              onChange={(e) => handleChange(index, "gypsum", e.target.value)}
+              value={record.raw_material_gypsum_tpd}
+              onChange={(e) => handleChange(index, "raw_material_gypsum_tpd", e.target.value)}
             />
           </div>
 
@@ -170,8 +181,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.electricityCost}
-              onChange={(e) => handleChange(index, "electricityCost", e.target.value)}
+              value={record.electricity_cost_usd}
+              onChange={(e) => handleChange(index, "electricity_cost_usd", e.target.value)}
             />
           </div>
 
@@ -180,8 +191,8 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
             <input
               type="number"
               className="border rounded p-1 w-32"
-              value={record.maintenanceDowntime}
-              onChange={(e) => handleChange(index, "maintenanceDowntime", e.target.value)}
+              value={record.maintenance_downtime_hr}
+              onChange={(e) => handleChange(index, "maintenance_downtime_hr", e.target.value)}
             />
           </div>
 
@@ -205,7 +216,7 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
           className="bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
           onClick={() => onSubmit(records)}
         >
-          {isLoading?"data loading":"submit"}
+          {isLoading ? "data loading":"submit"}
         </button>
       </div>
     </div>

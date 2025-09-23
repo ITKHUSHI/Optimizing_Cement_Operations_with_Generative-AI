@@ -128,71 +128,69 @@ function calculatePredictedCO2(predictedEnergy, fuelType, altFuelPct) {
 }
 async function getOptimizationResults(req, res) {
   try {
-    const inputData = req.body;
+    const {baseInput, scenarios }= req.body;
+   const allResult=[];
+    for(const scenario of scenarios){
+      const input={...baseInput,...scenario}
 
-    const prompt = `
-You are an expert cement plant optimization AI.
-Analyze the following plant inputs and predict:
-1. Energy consumption (kWh)
-2. CO2 emissions (tons)
-3. Provide actionable recommendations
+          const prompt = `
+            You are an expert cement plant optimization AI.
+            Analyze the following plant inputs and predict:
+            1. Energy consumption (kWh)
+            2. CO2 emissions (tons)
+            3. Provide actionable recommendations
+            
+            Plant Input:
+            ${JSON.stringify(input)}
+            
+            Return output as JSON only:
+            {
+              "energyConsumption": <float>,
+              "co2Emission": <float>,
+              "recommendations": [
+                { "type": "energy", "action": "...", "value": "...", "priority": 1 },
+                { "type": "co2", "action": "...", "value": "...", "priority": 2 }
+              ]
+            }
+            `;
+            
+                // ✅ Call Gemini properly
+                const response = await ai.models.generateContent({
+                  model: "gemini-2.5-flash",
+                  contents: [{ role: "user", parts: [{ text: prompt }] }],
+                  generationConfig: {
+                    temperature: 0.2,
+                    maxOutputTokens: 500,
+                  },
+                });
+            
+            
+                // ✅ Extract text safely
+                let rawText = null;
+                if (response.candidates?.[0]?.content?.[0]?.parts?.[0]?.text) {
+                  rawText = response.candidates[0].content[0].parts[0].text;
+                } else if (response.candidates?.[0]?.content?.[0]?.text) {
+                  rawText = response.candidates[0].content[0].text;
+                } else if (response.text) {
+                  rawText = response.text;
+                }
+            
+                if (!rawText) {
+                  return res.status(400).json(("AI did not return any text content"));
+                }
+            
+                // ✅ Clean JSON fences
+                const cleanText = rawText
+                  .replace(/^```json\s*/, "")
+                  .replace(/```$/, "")
+                  .trim();
+                // ✅ Parse safely
+                 let parsedResult = JSON.parse(cleanText);
+            allResult.push(parsedResult)       
+            
+    }  
 
-Plant Input:
-${JSON.stringify(inputData)}
-
-Return output as JSON only:
-{
-  "energyConsumption": <float>,
-  "co2Emission": <float>,
-  "recommendations": [
-    { "type": "energy", "action": "...", "value": "...", "priority": 1 },
-    { "type": "co2", "action": "...", "value": "...", "priority": 2 }
-  ]
-}
-`;
-
-    // ✅ Call Gemini properly
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 500,
-      },
-    });
-
-
-    // ✅ Extract text safely
-    let rawText = null;
-    if (response.candidates?.[0]?.content?.[0]?.parts?.[0]?.text) {
-      rawText = response.candidates[0].content[0].parts[0].text;
-    } else if (response.candidates?.[0]?.content?.[0]?.text) {
-      rawText = response.candidates[0].content[0].text;
-    } else if (response.text) {
-      rawText = response.text;
-    }
-
-    if (!rawText) {
-      return res.status(400).json(("AI did not return any text content"));
-    }
-
-    // ✅ Clean JSON fences
-    const cleanText = rawText
-      .replace(/^```json\s*/, "")
-      .replace(/```$/, "")
-      .trim();
-    // ✅ Parse safely
-    let parsedResult;
-    try {
-      parsedResult = JSON.parse(cleanText);
-    } catch (err) {
-      return res.status(500).json({
-        error: "AI output not valid JSON",
-        raw: cleanText,
-      });
-    }
-
-    return res.status(200).json(parsedResult);
+    return res.status(200).json(allResult);
   } catch (error) {
     return res.status(500).json({
       error: "Optimization workflow failed",

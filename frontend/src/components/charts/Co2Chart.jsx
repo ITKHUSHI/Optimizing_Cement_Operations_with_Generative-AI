@@ -17,7 +17,8 @@ export default function CO2Chart({ data, co2Target }) {
 
   const chartData = {
   
-    labels: data.map(d => d.date), // month or year
+    labels: data.map(d => d.date) , // month or year
+    labels: data.map(d => d.year), // month or year
     datasets: [
       {
         label: "Actual CO₂ Emissions (Tons)",

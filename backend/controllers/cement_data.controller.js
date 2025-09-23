@@ -52,7 +52,6 @@ const getCementPlants = async (req, res) => {
   try {
 
     const plant_id = req.params.plant_id;
-    console.log(plant_id ,"plantid")
 
     if (!plant_id) {
       return res.status(400).json({ error: "plant_id is required" });
@@ -132,27 +131,26 @@ const  getPrediction=async(req, res)=> {
 const normalizeRecords = (records, plantId) => {
   return records.map((r) => ({
       plant_id: parseInt(plantId),                // INTEGER
-      plant_name: r.plant_name ||null,           // STRING
+      plant_name: r.plant_name,           // STRING
       timestamp: new Date(r.timestamp).toISOString(), // TIMESTAMP
-      clinker_production_tpd: r. clinker_production_tpd ? parseInt(r. clinker_production_tpd) : null,
-      cement_production_tpd: r.cement_production_tpd ? parseInt(r.cement_production_tpd) : null,
-      energy_consumption_kwh: r. energy_consumption_kwh ? parseInt(r. energy_consumption_kwh) : null,
-      fuel_type: r.fuel_type || null,
-      alt_fuel_pct: r.alt_fuel_pct ? parseInt(r.alt_fuel_pct) : null,
-      co2_emissions_tons: r.co2_emissions_tons ? parseFloat(r.co2_emissions_tons) : null,
-      kiln_temperature_c: r.kiln_temperature_c ? parseInt(r.kiln_temperature_c) : null,
-      raw_material_limestone_tpd: r.raw_material_limestone_tpd ? parseFloat(r.raw_material_limestone_tpd) : null,
-      raw_material_clay_tpd: r.raw_material_clay_tpd ? parseFloat(r.raw_material_clay_tpd) : null,
-      raw_material_gypsum_tpd: r.raw_material_gypsum_tpd ? parseFloat(r.raw_material_gypsum_tpd) : null,
-      electricity_cost_usd: r.electricity_cost_usd ? parseFloat(r.electricity_cost_usd) : null,
-      maintenance_downtime_hr: r.maintenance_downtime_hr ? parseFloat(r.maintenance_downtime_hr) : null,  }));
+      clinker_production_tpd: parseInt(r. clinker_production_tpd),
+      cement_production_tpd:  parseInt(r.cement_production_tpd) ,
+      energy_consumption_kwh:  parseInt(r. energy_consumption_kwh),
+      fuel_type: r.fuel_type,
+      alt_fuel_pct:  parseInt(r.alt_fuel_pct),
+      co2_emissions_tons:  parseFloat(r.co2_emissions_tons) ,
+      kiln_temperature_c:  parseInt(r.kiln_temperature_c) ,
+      raw_material_limestone_tpd:  parseFloat(r.raw_material_limestone_tpd) ,
+      raw_material_clay_tpd: parseFloat(r.raw_material_clay_tpd) ,
+      raw_material_gypsum_tpd:  parseFloat(r.raw_material_gypsum_tpd) ,
+      electricity_cost_usd:  parseFloat(r.electricity_cost_usd) ,
+      maintenance_downtime_hr:  parseFloat(r.maintenance_downtime_hr),  }));
 };
 
 const addRecords = async (req, res) => { 
   try {
     const { records } = req.body;
     const plant_id = req.params.plant_id;
-    console.log(records);
 
     if (!plant_id) {
       return res.status(400).json({ error: "plantId is required" });
@@ -165,13 +163,11 @@ const addRecords = async (req, res) => {
     // Required fields
    
     const normalize= normalizeRecords(records,plant_id)
-      console.log(normalize)
     // Insert into BigQuery
     await bigquery.dataset("cement_data").table("plant_performance").insert(normalize);
 
     return res.status(200).json({ message: "Records added successfully", count: normalize.length });
   } catch (err) {
-    console.error("BigQuery Insert Error:", err);
     return res.status(500).json({ error: "Failed to insert records into BigQuery" });
   }
 };

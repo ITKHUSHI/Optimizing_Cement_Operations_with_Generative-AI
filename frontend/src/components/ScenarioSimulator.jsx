@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { APIURL } from '../../utils';
+import toast from 'react-hot-toast';
 
 const ScenarioSimulator = ({ baseInput }) => {
   const [scenarios, setScenarios] = useState([{ alternativeFuel: 5, hydrogenFuel: 0 }]);
@@ -14,7 +15,7 @@ const ScenarioSimulator = ({ baseInput }) => {
       try {
         setResults([JSON.parse(saved)]); // wrap in array
       } catch (err) {
-        console.error('Failed to parse saved results', err);
+       toast.error('Failed to parse saved results', err);
       }
     }
   }, []);
@@ -45,18 +46,15 @@ const ScenarioSimulator = ({ baseInput }) => {
       const res = await axios.post(`${APIURL}/api/ai/optimization/scenario`, { baseInput, scenarios }, {
         headers: { 'Content-Type': 'application/json' },
       });
-      console.log('Simulation response:', res.data);
 
       localStorage.setItem('cementOptimizationResult', JSON.stringify(res.data));
       setResults([res.data]); // set as array to match UI mapping
     } catch (err) {
-      console.error(err);
-      alert('Simulation failed');
+      toast.error('Simulation failed',err);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div className="p-4 border rounded">
       <h2 className="text-xl font-bold mb-2">Scenario Simulation</h2>
@@ -89,25 +87,25 @@ const ScenarioSimulator = ({ baseInput }) => {
 
       <div className="mt-4">
         {results?.length > 0 ? (
-          results.map((r, idx) => (
+          results?.map((r, idx) => (
             <div key={idx} className="p-4 mb-4 border rounded-lg shadow-sm bg-amber-100">
               <div className="text-lg font-bold mb-2 text-amber-900">Scenario #{idx + 1}</div>
               <div className="mb-1">
-                <span className="font-semibold">Predicted Energy:</span> {r.energyConsumption.toLocaleString(undefined, { maximumFractionDigits: 2 })} kWh
+                <span className="font-semibold">Predicted Energy:</span> {r?.energyConsumption?.toLocaleString(undefined, { maximumFractionDigits: 2 })} kWh
               </div>
               <div className="mb-2">
-                <span className="font-semibold">Predicted CO₂:</span> {r.co2Emission.toLocaleString(undefined, { maximumFractionDigits: 2 })} tons
+                <span className="font-semibold">Predicted CO₂:</span> {r?.co2Emission?.toLocaleString(undefined, { maximumFractionDigits: 2 })} tons
               </div>
 
               <div className="mt-2">
                 <div className="font-semibold mb-1">Recommendations:</div>
                 <ul className="space-y-2">
-                  {r.recommendations.map((rec, i) => (
-                    <li key={i} className={`p-2 rounded ${rec.type === "energy" ? "bg-green-100 text-green-900" : "bg-red-100 text-red-900"}`}>
-                      <div className="font-semibold">{rec.type.toUpperCase()}</div>
-                      <div>{rec.action}</div>
-                      <div className="text-sm text-gray-700">{rec.value}</div>
-                      <div className="text-xs font-medium mt-1">Priority {rec.priority}</div>
+                  {r?.recommendations?.map((rec, i) => (
+                    <li key={i} className={`p-2 rounded ${rec?.type === "energy" ? "bg-green-100 text-green-900" : "bg-red-100 text-red-900"}`}>
+                      <div className="font-semibold">{rec?.type?.toUpperCase()}</div>
+                       <li ><strong>Action:</strong>  {rec?.action}</li>
+                       <li ><strong>Value:</strong>  {rec?.value}</li>
+                      <div className="text-xs font-medium mt-1">Priority {rec?.priority}</div>
                     </li>
                   ))}
                 </ul>

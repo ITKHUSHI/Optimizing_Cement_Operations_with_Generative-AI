@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { APIURL } from "../../utils";
 import { useNavigate ,Link} from "react-router-dom";
-
+import toast from "react-hot-toast";
 export default function CementPlantRegister() {
   const [inputs, setInputs] = useState({
     plant_name: "",
@@ -35,6 +35,7 @@ export default function CementPlantRegister() {
       localStorage.setItem('plantId',JSON.stringify(res.data.plant.plant_id));
 
       setInputs({ plant_id: "", plant_name: "", location: "", capacity_tpd: "" });
+      toast.success("register successfully ✨")
     } catch (err) {
       const message = err.response?.data?.error || "Failed to register plant.";
       setErrorMsg(message);

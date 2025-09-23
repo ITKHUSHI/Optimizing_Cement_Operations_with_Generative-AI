@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { APIURL } from "../../utils";
 import { useNavigate ,Link} from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const [inputs, setInputs] = useState({
@@ -34,9 +35,9 @@ export default function Login() {
       localStorage.setItem('plantId',JSON.stringify(res.data.plant.plant_id));
       navigate('/cement-plant');
       setInputs({ plant_id: "", password: "" });
+      toast.success("login Success 🙈")
     } catch (err) {
-      console.error("Registration error:", err);
-      const message = err.response?.data?.error || "Failed to register plant.";
+      const message = err.response?.data?.error || "Failed to login plant.";
       setErrorMsg(message);
     } finally { 
       setIsLoading(false);

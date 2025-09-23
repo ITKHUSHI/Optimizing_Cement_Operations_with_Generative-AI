@@ -22,7 +22,7 @@ const CsvUpload = ({ onSubmit ,isLoading}) => {
           kiln_temperature_c: r.kilnTemp || r.kiln_temperature_c || "",
           alt_fuel_pct: r.altFuel || r.alt_fuel_pct || "",
           energy_consumption_kwh: r.energy || r.energy_consumption_kwh || "",
-           co2_emissions_tons: r.co2 || r.co2_emissions_tons || "",
+          co2_emissions_tons: r.co2 || r.co2_emissions_tons || "",
           fuel_type: r.fuelType || r.fuel_type || "",
           raw_material_limestone_tpd: r.limestone || r.raw_material_limestone_tpd || "",
           raw_material_clay_tpd: r.clay || r.raw_material_clay_tpd || "",

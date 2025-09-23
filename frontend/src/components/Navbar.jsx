@@ -6,6 +6,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const plantId = localStorage.getItem("plantId");
   const Navigate = useNavigate();
+  
   const handleLogout = () => {
     localStorage.removeItem("plantId");
     localStorage.removeItem("plantData");

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { APIURL } from '../../utils';
+import toast from 'react-hot-toast';
 
 function CementPlant() {
   const [plantData, setPlantData] = useState(null);
 
   const storedPlantId = localStorage.getItem('plantId') ;
   const plant_id = JSON.parse(storedPlantId);
-  console.log('Plant ID:', plant_id);
 
   useEffect(() => {
     const fetchPlantData = async () => {
@@ -17,9 +17,8 @@ function CementPlant() {
         });
 
         setPlantData(res.data.cementPlant);
-        console.log('✅ Fetched plant data:', res.data);
       } catch (error) {
-        console.error('❌ Failed to fetch plant data:', error);
+        toast.error('❌ Failed to fetch plant data:', error);
       }
     };
 

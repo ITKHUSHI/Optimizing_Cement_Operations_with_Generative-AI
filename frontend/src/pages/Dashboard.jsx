@@ -1,11 +1,12 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense ,lazy} from "react";
 import axios from "axios";
 import ManualUpload from "../components/Manuallyupload";
 import CsvUpload from "../components/CSVFilezUpload";
-import EnergyChart from "../components/charts/EnergyChart";
-import CO2Chart from "../components/charts/Co2Chart";
-import FuelMixChart from "../components/charts/FuelMixChart";
+const EnergyChart =lazy(()=>import( "../components/charts/EnergyChart"));
+const CO2Chart =lazy(()=>import("../components/charts/Co2Chart"));
+const FuelMixChart=lazy(()=>import( "../components/charts/FuelMixChart"));
 import { APIURL } from "../../utils";
+import toast from "react-hot-toast";
 
 
 export default function DashboardPage() {
@@ -52,7 +53,7 @@ export default function DashboardPage() {
       setMode(null);
       fetchData();
     } catch (err) {
-      alert("Failed to submit data");
+      toast.error("Failed to submit data");
     }
   };
 
@@ -99,10 +100,10 @@ export default function DashboardPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <h1 className="text-4xl font-bold mb-8 text-gray-800">Cement Plant Dashboard</h1>
 
-      <h4 className="text-center font-bold text-xl mb-4">2025 Chart</h4>
+      <h4 className="text-center font-bold text-4xl mb-4 text-blue-600">Data Analysis</h4>
 
-      {chartDataArray.length > 0 ? (
-        <Suspense fallback={<p>Loading charts...</p>}>
+      {loading || chartDataArray.length > 0 ? (
+         <Suspense fallback={<div className="text-center text-black  mt-10">Loading Charts...</div>}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
             <div className="bg-white p-6 rounded-lg shadow h-[400px]">
               <EnergyChart data={chartDataArray} />
