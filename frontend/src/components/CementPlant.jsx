@@ -8,7 +8,7 @@ export default function CementPlantDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 const plant = JSON.parse(localStorage.getItem("plantData") || "null");
-const plant_id = plant?.id; 
+const plant_id = plant?._id || plant?.id; 
   useEffect(() => {
     const fetchPlantData = async () => {
       try {

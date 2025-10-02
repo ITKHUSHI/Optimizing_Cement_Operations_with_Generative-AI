@@ -174,22 +174,28 @@ const logoutCementPlant = (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
- const getCementPlantData = async (req, res) => {
+const getCementPlantData = async (req, res) => {
   try {
-    const plant_id = req.params.plant_id; // from auth middleware
+    const plant_id = req.params.plant_id.toString(); // from auth middleware
+      console.log("Fetching data for plant ID:", req.params);
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(plant_id)) {
+      return res.status(400).json({ message: "Invalid plant ID" });
+    }
 
-    const plant = await CementPlant.findById(plant_id).select("-password"); // exclude password
+    // Fetch plant excluding password
+    const plant = await CementPlant.findById(plant_id).select("-password");
+
     if (!plant) {
       return res.status(404).json({ message: "Cement plant not found" });
     }
- 
-    res.status(200).json({ plant:plant });
+
+    res.status(200).json({ plant });
   } catch (err) {
     console.error("Error fetching cement plant data:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
- 
 
 const  getPrediction=async(req, res)=> {
   try {
