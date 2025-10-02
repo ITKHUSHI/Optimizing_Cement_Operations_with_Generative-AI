@@ -1,86 +1,195 @@
-import { getForecast,getRecommendations,calculatePredictedCO2 } from './ai.controller.js';
+import { Orchestrator } from '../agents/agents.js';
 import dotenv from 'dotenv';
 import bigquery from '../config/bigquery.js';
+import { CementPlant } from '../model/cement.model.js';
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import mongoose from 'mongoose';
 dotenv.config();
-
-
-const registerCementPlant=async(req,res)=>{
-  try{
-    const {plant_name,location,capacity_tpd,password}=req.body
-    if(!password|| !plant_name || !location || !capacity_tpd){
-       return res.status(400).json({ error: 'All fields are required: plant_id, plant_name, location, capacity_tpd' })
-    }
-    const hashPassword=password.split('').reverse().join('') + 'hashed'; 
-    const id=Math.random()*123+12;
-    const newPlant={
-      plant_id:parseInt(id),
-      plant_name,
-      location,
-      capacity_tpd: parseFloat(capacity_tpd),
-      password:hashPassword,
-      created_at: new Date().toISOString() 
-
-    }
-    await bigquery.dataset("cement_data").table("cement_plants").insert(newPlant);
-    delete newPlant.password;
-
-    res.status(201).json({ message: 'Cement plant registered successfully', plant: newPlant});
-  }
-  catch(error){
-    res.status(500).json({ error: 'Failed to register cement plant', details: error });
-  }
-}
-const loginCementPlant=async(req,res)=>{
+const JWT_SECRET = process.env.JWT_SECRET
+const registerCementPlant = async (req, res) => {
   try {
-    const{plant_id,password}=req.body;
-    if(!plant_id || !password){
-      return res.status(400).json({ error: 'Both plant_id and password are required' });
+    const {
+      plantName,
+      organizationName,
+      organizationEmail,
+      password,
+      country,
+      state,
+      city,
+      managerName,
+      managerEmail,
+      managerPhone,
+      capacityTPD,
+      kilnCount,
+      kilnType,
+      productionLines,
+      primaryFuel,
+      alternativeFuels,
+      powerCapacityMW,
+      tsr,
+      co2Baseline,
+      energyBaseline,
+      rawMaterialQuality,
+      constraints,
+      yearCommissioned,
+    } = req.body;
+ 
+    // Validate required fields
+    if (!plantName || !organizationName || !organizationEmail || !password || !country || !state || !city) {
+      return res.status(400).json({ error: "Required fields missing" });
     }
-    const hashPassword=password.split('').reverse().join('') + 'hashed';
-    const query=`SELECT * FROM \`${process.env.GCP_PROJECT_ID}.cement_data.cement_plants\` WHERE plant_id=${parseInt(plant_id)} AND password='${hashPassword}' LIMIT 1`;
-    const [cementPlant]=await bigquery.query({query})
-    if(cementPlant.length===0){
-      return res.status(401).json({ error: 'Cement plant not found' });
-    }
-    delete cementPlant[0].password;
-    return res.status(200).json({ message: 'Login successful', plant: cementPlant[0] });
-  } catch (error) {
-    return res.status(500).json({ error: 'Login failed', details: error.message });
-  }
-}
-const getCementPlants = async (req, res) => {
-  try {
 
-    const plant_id = req.params.plant_id;
-
-    if (!plant_id) {
-      return res.status(400).json({ error: "plant_id is required" });
+    // Check if email already exists
+    const existingPlant = await CementPlant.findOne({ organizationEmail });
+    if (existingPlant) {
+      return res.status(400).json({ error: "Organization email already registered" });
     }
 
-    const query = `
-      SELECT * FROM \`${process.env.GCP_PROJECT_ID}.cement_data.cement_plants\`
-      WHERE plant_id = ${plant_id}
-      LIMIT 1
-    `;
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const options = {
-      query: query,
-      params: { plant_id },
+    // Prepare data
+    const plantData = {
+      plantName,
+      organizationName,
+      organizationEmail,
+      password: hashedPassword,
+      location: {
+        country:  country,
+        state:  state,
+        city:  city,
+      },
+      manager: {
+        name: managerName,
+        email: managerEmail,
+        phone: managerPhone,
+      },
+      capacityTPD: Number(capacityTPD) || 0,
+      kilnCount: Number(kilnCount) || 0,
+      kilnType,
+      productionLines: Number(productionLines) || 0,
+      primaryFuel,
+      alternativeFuels: Array.isArray(alternativeFuels) ? alternativeFuels : [],
+      powerCapacityMW: Number(powerCapacityMW) || 0,
+      tsr: Number(tsr) || 0,
+      co2Baseline: Number(co2Baseline) || 0,
+      energyBaseline: Number(energyBaseline) || 0,
+      rawMaterialQuality: {
+        limestoneGrade: Number(rawMaterialQuality?.limestoneGrade) || 0,
+      },
+      constraints,
+      yearCommissioned: Number(yearCommissioned) || 0,
+      
     };
 
-    const [rows] = await bigquery.query(options);
+    // Save to DB
+    const newPlant = await CementPlant.create(plantData);
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Cement plant not found" });
-    }
+    // Create JWT and set cookie
+    const token = jwt.sign({ id: newPlant._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-    const cementPlant = rows[0];
-    return res.status(200).json({ cementPlant });
-
-  } catch (error) {
-    return res.status(500).json({ error: "Failed to fetch cement plant data", details: error.message });
+    return res.status(201).json({ message: "Cement Plant registered successfully", plant: newPlant });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Server error" });
   }
 };
+
+ const loginCementPlant = async (req, res) => {
+  try {
+    const { password,plant_id , organizationEmail } = req.body; // identifier = org email OR _id
+    if (!(plant_id || organizationEmail) || !password) {
+      return res.status(400).json({ message: "Identifier and password are required" });
+    }
+
+    let plant;
+
+    // Check if identifier is a valid MongoDB ObjectId
+    if (mongoose.Types.ObjectId.isValid(plant_id)) {
+      plant = await CementPlant.findById(plant_id);
+    }
+
+    // If not found by _id, try organizationEmail
+    if (!plant) {
+      plant = await CementPlant.findOne({ organizationEmail: organizationEmail });
+    }
+ 
+    if (!plant) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Compare password
+    const isMatch = await bcrypt.compare(password, plant.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { _id: plant._id, organizationEmail: plant.organizationEmail },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Send token in HTTP-only cookie
+    res
+      .cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      })
+      .status(200)
+      .json({
+        message: "Login successful",
+        plant: {
+          _id: plant._id,
+          plantName: plant.plantName,
+          organizationName: plant.organizationName,
+          organizationEmail: plant.organizationEmail,
+        },
+      });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+}; 
+
+const logoutCementPlant = (req, res) => {
+  try {
+    // Clear the JWT cookie
+    res
+      .cookie("token", "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        expires: new Date(0), // Set expiration in the past
+      })
+      .status(200)
+      .json({ message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+ const getCementPlantData = async (req, res) => {
+  try {
+    const plant_id = req.params.plant_id; // from auth middleware
+
+    const plant = await CementPlant.findById(plant_id).select("-password"); // exclude password
+    if (!plant) {
+      return res.status(404).json({ message: "Cement plant not found" });
+    }
+ 
+    res.status(200).json({ plant:plant });
+  } catch (err) {
+    console.error("Error fetching cement plant data:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+ 
 
 const  getPrediction=async(req, res)=> {
   try {
@@ -111,46 +220,35 @@ const  getPrediction=async(req, res)=> {
 
     const now = new Date();
     inputData.timestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')} ${String(now.getUTCHours()).padStart(2, '0')}:${String(now.getUTCMinutes()).padStart(2, '0')}:${String(now.getUTCSeconds()).padStart(2, '0')}+0000`;
-
-    const predictedEnergy = await getForecast([inputData]);
-
-    const predictedCO2 = calculatePredictedCO2(predictedEnergy, inputData.fuel_type, inputData.alt_fuel_pct);
-
-    const recommendations = await getRecommendations(predictedEnergy, inputData);
-
-   return res.status(200).json({
-      predictedEnergy,
-      predictedCO2,
-      recommendations
-    });
+   return res.status(200).json(await Orchestrator(inputData));
   } catch (error) {
     return res.status(500).json({ error: 'Prediction workflow failed', details: error.message });
   }
 }
 
-const normalizeRecords = (records, plantId) => {
-  return records.map((r) => ({
-      plant_id: parseInt(plantId),                // INTEGER
-      plant_name: r.plant_name,           // STRING
-      timestamp: new Date(r.timestamp).toISOString(), // TIMESTAMP
-      clinker_production_tpd: parseInt(r. clinker_production_tpd),
-      cement_production_tpd:  parseInt(r.cement_production_tpd) ,
-      energy_consumption_kwh:  parseInt(r. energy_consumption_kwh),
-      fuel_type: r.fuel_type,
-      alt_fuel_pct:  parseInt(r.alt_fuel_pct),
-      co2_emissions_tons:  parseFloat(r.co2_emissions_tons) ,
-      kiln_temperature_c:  parseInt(r.kiln_temperature_c) ,
-      raw_material_limestone_tpd:  parseFloat(r.raw_material_limestone_tpd) ,
-      raw_material_clay_tpd: parseFloat(r.raw_material_clay_tpd) ,
-      raw_material_gypsum_tpd:  parseFloat(r.raw_material_gypsum_tpd) ,
-      electricity_cost_usd:  parseFloat(r.electricity_cost_usd) ,
-      maintenance_downtime_hr:  parseFloat(r.maintenance_downtime_hr),  }));
-};
+// const normalizeRecords = (records, plantId) => {
+//   return records.map((r) => ({
+//       plant_id: parseInt(plantId),                // INTEGER
+//       plant_name: r.plant_name,           // STRING
+//       timestamp: new Date(r.timestamp).toISOString(), // TIMESTAMP
+//       clinker_production_tpd: parseInt(r. clinker_production_tpd),
+//       cement_production_tpd:  parseInt(r.cement_production_tpd) ,
+//       energy_consumption_kwh:  parseInt(r. energy_consumption_kwh),
+//       fuel_type: r.fuel_type,
+//       alt_fuel_pct:  parseInt(r.alt_fuel_pct),
+//       co2_emissions_tons:  parseFloat(r.co2_emissions_tons) ,
+//       kiln_temperature_c:  parseInt(r.kiln_temperature_c) ,
+//       raw_material_limestone_tpd:  parseFloat(r.raw_material_limestone_tpd) ,
+//       raw_material_clay_tpd: parseFloat(r.raw_material_clay_tpd) ,
+//       raw_material_gypsum_tpd:  parseFloat(r.raw_material_gypsum_tpd) ,
+//       electricity_cost_usd:  parseFloat(r.electricity_cost_usd) ,
+//       maintenance_downtime_hr:  parseFloat(r.maintenance_downtime_hr),  }));
+// };
 
-const addRecords = async (req, res) => { 
+const addRecords = async (req, res) => {
   try {
     const { records } = req.body;
-    const plant_id = req.params.plant_id;
+    const { plant_id } = req.params;
 
     if (!plant_id) {
       return res.status(400).json({ error: "plantId is required" });
@@ -160,133 +258,116 @@ const addRecords = async (req, res) => {
       return res.status(400).json({ error: "Records array is required" });
     }
 
-    // Required fields
-   
-    const normalize= normalizeRecords(records,plant_id)
-    // Insert into BigQuery
-    await bigquery.dataset("cement_data").table("plant_performance").insert(normalize);
+    // Add plant_id to each record
+    const recordsWithPlantId = records.map((record) => ({
+      ...record,
+      plant_id: plant_id,
+      timestamp: record.timestamp ? new Date(record.timestamp) : new Date(),
+    }));
 
-    return res.status(200).json({ message: "Records added successfully", count: normalize.length });
+    // Insert into MongoDB
+    await CementPlantPerformance.insertMany(recordsWithPlantId);
+
+    return res
+      .status(200)
+      .json({ message: "Records added successfully", count: records.length });
   } catch (err) {
-    return res.status(500).json({ error: "Failed to insert records into BigQuery" });
+    console.error("Failed to insert records:", err);
+    return res
+      .status(500)
+      .json({ error: "Failed to insert records into MongoDB" });
   }
 };
 
-
 const getDashboardData = async (req, res) => {
   try {
-    const {plant_id }=req.params;
+    const { plant_id } = req.params;
 
-    if (!plant_id) return res.status(400).json({ error: "plantId is required" });
+    if (!plant_id) {
+      return res.status(400).json({ error: "plantId is required" });
+    }
 
     // Check if plant exists
-    const checkQuery = `
-      SELECT COUNT(*) AS count
-      FROM \`${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\`
-      WHERE plant_id = ${plant_id}
-    `;
-
-    const [checkResult] = await bigquery.query({
-      query: checkQuery,
-       plant_id: plant_id ,
-    });
-
-    if (checkResult[0].count === 0) {
+    const plantExists = await CementPlantPerformance.exists({ plant_id: plant_id });
+    if (!plantExists) {
       return res.status(404).json({ error: "Plant ID not found" });
     }
 
-    // Query for current year monthly + previous 4 years yearly averages
+    const currentYear = new Date().getFullYear();
+    const fiveYearsAgo = currentYear - 4;
 
+    // MongoDB aggregation pipeline
+    const pipeline = [
+      { $match: { plant_id: plant_id } },
 
+      // Add year and month fields
+      {
+        $addFields: {
+          year: { $year: "$timestamp" },
+          month: { $month: "$timestamp" },
+        },
+      },
 
+      // Filter for last 5 years
+      { $match: { year: { $gte: fiveYearsAgo } } },
 
-const query = `
-WITH years_count AS (
-  SELECT
-    COUNT(DISTINCT EXTRACT(YEAR FROM timestamp)) AS total_years
-  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
-  WHERE plant_id = ${plant_id}
-),
+      // Group by year and month for monthly averages
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          clinker_production_avg: { $avg: "$clinker_production_tpd" },
+          cement_production_avg: { $avg: "$cement_production_tpd" },
+          kiln_temp_avg: { $avg: "$kiln_temperature_c" },
+          alt_fuel_avg: { $avg: "$alt_fuel_pct" },
+          energy_avg: { $avg: "$energy_consumption_kwh" },
+          co2_avg: { $avg: "$co2_emissions_tons" },
+          most_common_fuel: { $first: "$fuel_type" }, // approximate most common
+        },
+      },
 
--- Year-wise averages (last 5 years)
-yearly_avg AS (
-  SELECT
-    EXTRACT(YEAR FROM timestamp) AS year,
-    NULL AS month,
-    AVG(clinker_production_tpd) AS clinker_production_avg,
-    AVG(cement_production_tpd) AS cement_production_avg,
-    AVG(kiln_temperature_c) AS kiln_temp_avg,
-    AVG(alt_fuel_pct) AS alt_fuel_avg,
-    AVG(energy_consumption_kwh) AS energy_avg,
-    AVG(co2_emissions_tons) AS co2_avg,
-    ANY_VALUE(fuel_type) AS most_common_fuel
-  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
-  WHERE plant_id = ${plant_id}
-    AND EXTRACT(YEAR FROM timestamp) >= EXTRACT(YEAR FROM CURRENT_DATE()) - 4
-  GROUP BY year
-  ORDER BY year ASC
-  limit 5
-),
+      // Sort by year and month
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ];
 
--- Month-wise averages for the current year
-monthly_avg AS (
-  SELECT
-    EXTRACT(YEAR FROM timestamp) AS year,
-    EXTRACT(MONTH FROM timestamp) AS month,
-    AVG(clinker_production_tpd) AS clinker_production_avg,
-    AVG(cement_production_tpd) AS cement_production_avg,
-    AVG(kiln_temperature_c) AS kiln_temp_avg,
-    AVG(alt_fuel_pct) AS alt_fuel_avg,
-    AVG(energy_consumption_kwh) AS energy_avg,
-    AVG(co2_emissions_tons) AS co2_avg,
-    ANY_VALUE(fuel_type) AS most_common_fuel
-  FROM \ ${process.env.GCP_PROJECT_ID}.cement_data.plant_performance\
-  WHERE plant_id = ${plant_id}
-    AND EXTRACT(YEAR FROM timestamp) = EXTRACT(YEAR FROM CURRENT_DATE())
-  GROUP BY year, month
-  ORDER BY month ASC
-)
+    const results = await CementPlantPerformance.aggregate(pipeline);
 
-SELECT * 
-FROM monthly_avg
-WHERE (SELECT total_years FROM years_count) = 1
-UNION ALL
-SELECT * 
-FROM yearly_avg
-WHERE (SELECT total_years FROM years_count) > 1
-ORDER BY year ASC, month ASC;
-`;
+    // Format data for charts
+    const labels = results.map((r) =>
+      r._id.month ? `${r._id.year}-${r._id.month}` : `${r._id.year}`
+    );
+    const clinkerProduction = results.map((r) => r.clinker_production_avg);
+    const cementProduction = results.map((r) => r.cement_production_avg);
+    const kilnTemp = results.map((r) => r.kiln_temp_avg);
+    const altFuel = results.map((r) => r.alt_fuel_avg);
+    const energyConsumption = results.map((r) => r.energy_avg);
+    const co2Emissions = results.map((r) => r.co2_avg);
+    const fuel_type = results.map((r) => r.most_common_fuel);
 
-
-
-
-    const [rows] = await bigquery.query({
-      query,
-      plant_id ,
+    return res.status(200).json({
+      labels,
+      clinkerProduction,
+      cementProduction,
+      kilnTemp,
+      altFuel,
+      energyConsumption,
+      co2Emissions,
+      fuel_type,
     });
-    // Format for charts
-   return res.status(200).json({
-      labels: rows.map(r => r.month ? `${r.year}-${r.month}` : `${r.year}`), // x-axis
-      clinkerProduction: rows.map(r => r.clinker_production_avg),
-      cementProduction: rows.map(r => r.cement_production_avg),
-      kilnTemp: rows.map(r => r.kiln_temp_avg),
-      altFuel: rows.map(r => r.alt_fuel_avg),
-      energyConsumption: rows.map(r => r.energy_avg),
-      co2Emissions: rows.map(r => r.co2_avg),
-       fuel_type: rows.map(r => r.most_common_fuel),
-    });
-
   } catch (err) {
+    console.error("Failed to fetch dashboard data:", err);
     return res.status(500).json({ error: "Failed to fetch dashboard data" });
   }
 };
 
 
 
-export {registerCementPlant,
+
+export {
+  registerCementPlant,
    getPrediction ,
-   getCementPlants,
+   getCementPlantData,
    loginCementPlant,
    addRecords,
-   getDashboardData
+   getDashboardData,
+   logoutCementPlant
   };
