@@ -7,8 +7,8 @@ Live Preview :- https://optimizing-cement-operations-with-uc6o.onrender.com/
 
 ---
 dummy credentials to login 
-projectId :- 3
-password: jkcement
+projectId :- 68dbac21b94551641e74b82c
+password: -sunrise
 
 ```
 ## Features
