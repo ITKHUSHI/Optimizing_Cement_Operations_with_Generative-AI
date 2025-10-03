@@ -177,7 +177,6 @@ const logoutCementPlant = (req, res) => {
 const getCementPlantData = async (req, res) => {
   try {
     const plant_id = req.params.plant_id.toString(); // from auth middleware
-      console.log("Fetching data for plant ID:", req.params);
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(plant_id)) {
       return res.status(400).json({ message: "Invalid plant ID" });
@@ -192,7 +191,6 @@ const getCementPlantData = async (req, res) => {
 
     res.status(200).json({ plant });
   } catch (err) {
-    console.error("Error fetching cement plant data:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

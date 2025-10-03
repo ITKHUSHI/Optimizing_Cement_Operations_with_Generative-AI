@@ -61,10 +61,11 @@ const startPlantMonitoring = async (req, res) => {
       // emit to all connected sockets
      io.to(plantId).emit("plantMetrics", metrics);
      io.to(plantId).emit("recommendations", recs);
-
+       console.log(metrics)
     }, 3000);
 
     monitoringIntervals.set(plantId, intervalId);
+    console.log("▶️ Started monitoring for plant:", plantId);
 
   } catch (error) {
     return res.status(500).json({ message: "Failed to start monitoring", error: error.message });

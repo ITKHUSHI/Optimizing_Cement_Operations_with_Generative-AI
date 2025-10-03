@@ -10,13 +10,11 @@ const socketAuth = async(socket, next) => {
     const parsedCookies = cookie.parse(rawCookie);
     const token = parsedCookies?.token;
     if (!token) throw new Error("Authentication required");
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const plantId = decoded?.id;
+    const plantId = decoded?.id || decoded?._id;
     if (!plantId) throw new Error("Invalid token");
 
    const plant= await CementPlant.findById(plantId).select("-password")
-      
         socket.plant = plant;       
          next(); // allow connection
       

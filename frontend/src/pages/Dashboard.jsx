@@ -10,7 +10,8 @@ export default function LiveDashboard() {
   const [recs, setRecs] = useState([]);
   const socket = getSocket();
   const plantData = JSON.parse(localStorage.getItem("plantData"));
-  const plantId = plantData?.id;
+  const plantId = plantData?.id || plantData?._id;
+
 
   const MAX_POINTS = 60;
 
@@ -75,14 +76,14 @@ export default function LiveDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 via-gray-50 to-gray-100 p-6 font-sans">
+    <div className="min-h-screen bg-gradient-to-br mt-16  from-gray-100 via-gray-50 to-gray-100 p-6 font-sans">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-800 mb-2 md:mb-0">
-            Cement Plant Live Optimizer
+        <header className="flex flex-col  justify-between mb-8 text-center">
+          <h1 className="text-4xl font-extrabold text-blue-500 mb-2 md:mb-0 text-center">
+            Cement Plant Live Updates
           </h1>
           <span
-            className={`px-4 py-1 rounded-full font-semibold text-sm ${
+            className={`px-4 py-1 rounded-full font-semibold text-sm   text-left w-28  ${
               connected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
             }`}
           >
