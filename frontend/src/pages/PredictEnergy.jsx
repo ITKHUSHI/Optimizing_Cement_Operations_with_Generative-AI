@@ -1,6 +1,7 @@
 import React,{useState, Suspense} from 'react'
 const EnergyPrediction = React.lazy(() => import('../components/EnergyPrediction'));
-function Home() {
+
+function PredictEnergy() {
   
   return (
     <>
@@ -21,4 +22,4 @@ function Home() {
 )
 }
 
-export default Home
+export default PredictEnergy

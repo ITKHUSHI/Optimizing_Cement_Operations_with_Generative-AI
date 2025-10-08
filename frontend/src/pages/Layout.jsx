@@ -110,19 +110,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section id="contact" className="py-20 text-center bg-blue-600 text-white">
-        <h2 className="text-3xl font-bold mb-6">Ready to Transform Your Plant Operations?</h2>
-        <p className="mb-6">
-          Connect with us to explore AI-driven optimization tailored to your cement plant.
-        </p>
-        <Link
-         target='_blank'  to={"https://www.linkedin.com/in/khushee0225/"}
-          className="px-8 py-4 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition"
-        >
-          Contact Us
-        </Link>
-      </section>
+     
     </div>
   );
 }

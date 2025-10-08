@@ -17,6 +17,7 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
         raw_material_gypsum_tpd: "",
         electricity_cost_usd: "",
         maintenance_downtime_hr: "",
+        location:"",
     },
   ]);
 
@@ -44,6 +45,7 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
         raw_material_gypsum_tpd: "",
         electricity_cost_usd: "",
         maintenance_downtime_hr: "",
+        location:"",
       },
     ]);
   };
@@ -54,7 +56,7 @@ const ManualUpload = ({ onSubmit , isLoading }) => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Manual Entry</h2>
+      <h2 className="text-xl font-semibold mb-4 text-center text-blue-500">Manual Entry</h2>
       {records.map((record, index) => (
         <div key={index} className="flex flex-wrap gap-2 mb-2 items-center border-b pb-2">
           <div className="flex flex-col">

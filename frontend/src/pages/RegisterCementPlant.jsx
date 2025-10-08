@@ -28,6 +28,8 @@ export default function MultiStepForm() {
       withCredentials: true
     });
        if (res.status === 201 || res.status === 200) {
+              localStorage.setItem('plantId',JSON.stringify(res?.data?.plant?._id));   
+
              navigate("/cement-plant")
              toast.success("Cement Plant Registered Successfully")
         }

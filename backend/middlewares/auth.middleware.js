@@ -2,6 +2,25 @@ import cookie from "cookie";
 import jwt from "jsonwebtoken";
 import { CementPlant } from "../model/cement.model.js";
 
+const userAuth = async(req, res, next) => {
+  try {
+    
+    const token = req?.headers?.cookie;
+    if (!token) throw new Error("Authentication required");
+    const parsedCookies = cookie.parse(token);
+    const jwtToken = parsedCookies?.token;
+    if (!jwtToken) throw new Error("Authentication required");
+    const decoded = jwt.verify(jwtToken, process.env.JWT_SECRET);
+    const plantId = decoded?.id || decoded?._id;
+    if (!plantId) throw new Error("Invalid token");
+    next();
+
+
+  } catch (error) {
+    return res.status(401).json({ message: "Authentication failed", error: error.message });
+  }
+}
+
 const socketAuth = async(socket, next) => {
   try {
     const rawCookie = socket?.request?.headers?.cookie;
@@ -19,8 +38,8 @@ const socketAuth = async(socket, next) => {
          next(); // allow connection
       
   } catch (error) {
-    next(new Error("Socket authentication failed"));
+    next(new Error("Socket authentication failed",error.message));
   }
 };
 
-export { socketAuth };
+export { socketAuth,userAuth };

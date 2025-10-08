@@ -5,6 +5,7 @@ import { CementPlant } from '../model/cement.model.js';
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import mongoose from 'mongoose';
+import { PlantPerformanceHistory } from '../model/plant_performance_history.js';
 dotenv.config();
 const JWT_SECRET = process.env.JWT_SECRET
 const registerCementPlant = async (req, res) => {
@@ -99,22 +100,19 @@ const registerCementPlant = async (req, res) => {
 
  const loginCementPlant = async (req, res) => {
   try {
-    const { password,plant_id , organizationEmail } = req.body; // identifier = org email OR _id
-    if (!(plant_id || organizationEmail) || !password) {
+    const { password,identifier } = req.body; // identifier = org email OR _id
+    if (!identifier || !password) {
       return res.status(400).json({ message: "Identifier and password are required" });
     }
 
-    let plant;
 
-    // Check if identifier is a valid MongoDB ObjectId
-    if (mongoose.Types.ObjectId.isValid(plant_id)) {
-      plant = await CementPlant.findById(plant_id);
-    }
-
-    // If not found by _id, try organizationEmail
-    if (!plant) {
-      plant = await CementPlant.findOne({ organizationEmail: organizationEmail });
-    }
+    const   plant = await CementPlant.findOne({
+       $or: [
+         { _id: identifier },
+         { organizationEmail: identifier }
+       ]
+     });
+ 
  
     if (!plant) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -152,8 +150,7 @@ const registerCementPlant = async (req, res) => {
         },
       });
   } catch (err) {
-    console.error("Login error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" ,err:err.message});
   }
 }; 
 
@@ -161,7 +158,7 @@ const logoutCementPlant = (req, res) => {
   try {
     // Clear the JWT cookie
     res
-      .cookie("token", "", {
+      .clearCookie("token", "", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -176,7 +173,7 @@ const logoutCementPlant = (req, res) => {
 };
 const getCementPlantData = async (req, res) => {
   try {
-    const plant_id = req.params.plant_id.toString(); // from auth middleware
+    const plant_id = req.params.plant_id; // from auth middleware
     // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(plant_id)) {
       return res.status(400).json({ message: "Invalid plant ID" });
@@ -191,7 +188,7 @@ const getCementPlantData = async (req, res) => {
 
     res.status(200).json({ plant });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error",err:err.message });
   }
 };
 
@@ -230,25 +227,6 @@ const  getPrediction=async(req, res)=> {
   }
 }
 
-// const normalizeRecords = (records, plantId) => {
-//   return records.map((r) => ({
-//       plant_id: parseInt(plantId),                // INTEGER
-//       plant_name: r.plant_name,           // STRING
-//       timestamp: new Date(r.timestamp).toISOString(), // TIMESTAMP
-//       clinker_production_tpd: parseInt(r. clinker_production_tpd),
-//       cement_production_tpd:  parseInt(r.cement_production_tpd) ,
-//       energy_consumption_kwh:  parseInt(r. energy_consumption_kwh),
-//       fuel_type: r.fuel_type,
-//       alt_fuel_pct:  parseInt(r.alt_fuel_pct),
-//       co2_emissions_tons:  parseFloat(r.co2_emissions_tons) ,
-//       kiln_temperature_c:  parseInt(r.kiln_temperature_c) ,
-//       raw_material_limestone_tpd:  parseFloat(r.raw_material_limestone_tpd) ,
-//       raw_material_clay_tpd: parseFloat(r.raw_material_clay_tpd) ,
-//       raw_material_gypsum_tpd:  parseFloat(r.raw_material_gypsum_tpd) ,
-//       electricity_cost_usd:  parseFloat(r.electricity_cost_usd) ,
-//       maintenance_downtime_hr:  parseFloat(r.maintenance_downtime_hr),  }));
-// };
-
 const addRecords = async (req, res) => {
   try {
     const { records } = req.body;
@@ -270,31 +248,34 @@ const addRecords = async (req, res) => {
     }));
 
     // Insert into MongoDB
-    await CementPlantPerformance.insertMany(recordsWithPlantId);
+    await PlantPerformanceHistory.insertMany(recordsWithPlantId);
 
     return res
       .status(200)
       .json({ message: "Records added successfully", count: records.length });
   } catch (err) {
-    console.error("Failed to insert records:", err);
     return res
       .status(500)
       .json({ error: "Failed to insert records into MongoDB" });
   }
 };
 
-const getDashboardData = async (req, res) => {
+const getHistoricalData = async (req, res) => {
   try {
-    const { plant_id } = req.params;
+    const plant_id = req.params.plant_id.toString(); // from auth middleware
+      // Validate ObjectId
+      if (!mongoose.Types.ObjectId.isValid(plant_id)) {
+        return res.status(400).json({ message: "Invalid plant ID" });
+      }
 
     if (!plant_id) {
       return res.status(400).json({ error: "plantId is required" });
     }
 
     // Check if plant exists
-    const plantExists = await CementPlantPerformance.exists({ plant_id: plant_id });
+    const plantExists = await PlantPerformanceHistory.findById(plant_id );
     if (!plantExists) {
-      return res.status(404).json({ error: "Plant ID not found" });
+      return res.status(200).json({ historicalData: []});
     }
 
     const currentYear = new Date().getFullYear();
@@ -333,7 +314,7 @@ const getDashboardData = async (req, res) => {
       { $sort: { "_id.year": 1, "_id.month": 1 } },
     ];
 
-    const results = await CementPlantPerformance.aggregate(pipeline);
+    const results = await PlantPerformanceHistory.aggregate(pipeline);
 
     // Format data for charts
     const labels = results.map((r) =>
@@ -358,8 +339,7 @@ const getDashboardData = async (req, res) => {
       fuel_type,
     });
   } catch (err) {
-    console.error("Failed to fetch dashboard data:", err);
-    return res.status(500).json({ error: "Failed to fetch dashboard data" });
+    return res.status(500).json({ error: "Failed to fetch dashboard data" , err:err.message});
   }
 };
 
@@ -372,6 +352,6 @@ export {
    getCementPlantData,
    loginCementPlant,
    addRecords,
-   getDashboardData,
+   getHistoricalData,
    logoutCementPlant
   };

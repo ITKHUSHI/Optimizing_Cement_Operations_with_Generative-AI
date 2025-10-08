@@ -97,10 +97,10 @@ const CsvUpload = ({ onSubmit ,isLoading}) => {
 
       {/* Modal for sample CSV */}
       {showSample && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
-          <div className="bg-white p-4 rounded shadow-lg max-w-3xl w-full max-h-[80vh] overflow-auto">
+        <div className=" inset-0 bg-black bg-opacity-50 fixed  justify-center items-start pt-20 z-50">
+          <div className="bg-white p-4 rounded shadow-lg  w-full max-h-[80vh] overflow-auto">
             <h3 className="text-lg font-bold mb-2">Sample CSV</h3>
-            <table className="border-collapse border w-full text-center">
+            <table className="border-collapse border w-full  text-center">
               <thead className="bg-gray-200">
                 <tr>
                   {Object.keys(sampleData[0] || {}).map((key) => (

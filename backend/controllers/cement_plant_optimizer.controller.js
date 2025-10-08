@@ -1,4 +1,5 @@
 import {io} from "../index.js";
+import moment from "moment";
 
 
 function generateRandomMetrics(prev = {}) {
@@ -36,6 +37,25 @@ function calculateRecommendations(metrics) {
   return recs;
 }
 
+// Helper: calculate health score
+const calculateHealthScore = (metrics) => {
+  let tempScore = Math.max(0, 100 - (metrics.temperature - 1400) * 0.1);
+  let kilnSpeedScore = Math.max(0, 100 - Math.abs(metrics.kilnSpeed - 3) * 20);
+  let pressureScore = Math.max(0, 100 - Math.abs(metrics.pressure - 1.2) * 50);
+  let o2Score = Math.max(0, 100 - Math.abs(metrics.o2 - 2) * 20);
+  let rawMoistureScore = Math.max(0, 100 - Math.abs(metrics.rawMoisture - 5) * 5);
+  let productionScore = Math.max(0, 100 - Math.abs(metrics.productionRate - 250) * 0.5);
+
+  const healthScore = (tempScore + kilnSpeedScore + pressureScore + o2Score + rawMoistureScore + productionScore) / 6;
+  return Math.min(Math.max(healthScore, 0), 100);
+};
+
+// Helper: determine alert level
+const getAlertLevel = (healthScore) => {
+  if (healthScore < 60) return "Critical";
+  if (healthScore < 80) return "Warning";
+  return "Normal";
+};
 // --- controller loop ---
 const monitoringIntervals = new Map();
 
@@ -44,6 +64,10 @@ const startPlantMonitoring = async (req, res) => {
     const plantId = req.params.plant_id;
     // first snapshot
     let metrics = generateRandomMetrics();
+    const healthScore = calculateHealthScore(metrics);
+    const alert = getAlertLevel(healthScore);
+    const defaultIntervalDays = 30;
+    const nextMaintenance = moment().add((healthScore / 100) * defaultIntervalDays, "days").toDate();
     let recs = calculateRecommendations(metrics);
 
     // send first snapshot
@@ -57,15 +81,20 @@ const startPlantMonitoring = async (req, res) => {
     const intervalId = setInterval(() => {
       metrics = generateRandomMetrics(); // new random metrics every interval
       recs = calculateRecommendations(metrics);
+       
+      // Recalculate maintenance info
+      const healthScore = calculateHealthScore(metrics);
+      const alert = getAlertLevel(healthScore);
+      const nextMaintenance = moment().add((healthScore / 100) * defaultIntervalDays, "days").toDate();
 
       // emit to all connected sockets
      io.to(plantId).emit("plantMetrics", metrics);
      io.to(plantId).emit("recommendations", recs);
-       console.log(metrics)
+     io.to(plantId).emit("maintenanceInfo", { healthScore, alert, nextMaintenance });
+    
     }, 3000);
 
     monitoringIntervals.set(plantId, intervalId);
-    console.log("▶️ Started monitoring for plant:", plantId);
 
   } catch (error) {
     return res.status(500).json({ message: "Failed to start monitoring", error: error.message });

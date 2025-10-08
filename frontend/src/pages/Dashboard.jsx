@@ -1,16 +1,18 @@
-import React, { useEffect, useState ,useRef} from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getSocket } from "../utils/socket";
 import axios from "axios";
 import { APIURL } from "../../utils";
+import PlantHealthCard from "../components/plantHealthCard.jsx";
+import toast from "react-hot-toast";
 
 export default function LiveDashboard() {
   const [connected, setConnected] = useState(false);
   const [metrics, setMetrics] = useState([]);
   const [latest, setLatest] = useState(null);
   const [recs, setRecs] = useState([]);
+  const [latestHealth, setLatestHealth] = useState(null); // store only latest maintenance health
   const socket = getSocket();
-  const plantData = JSON.parse(localStorage.getItem("plantData"));
-  const plantId = plantData?.id || plantData?._id;
+  const plant_id = JSON.parse(localStorage.getItem("plantId") || "null");
 
 
   const MAX_POINTS = 60;
@@ -29,7 +31,7 @@ export default function LiveDashboard() {
     const startMonitoring = async () => {
       try {
         const res = await axios.post(
-          `${APIURL}/api/cement/${plantId}/start-monitoring`,
+          `${APIURL}/api/cement/${plant_id}/start-monitoring`,
           {},
           { headers: { "Content-Type": "application/json" }, withCredentials: true }
         );
@@ -41,7 +43,7 @@ export default function LiveDashboard() {
           monitoringStarted = true;
         }
       } catch (err) {
-        console.error(err);
+        toast.error("error fetching live updates",err);
       }
     };
     startMonitoring();
@@ -54,18 +56,25 @@ export default function LiveDashboard() {
         return next;
       });
     };
+
     const handleRecs = (list) => setRecs(list);
+
+    const handleMaintenance = (info) => {
+      setLatestHealth(info); // store only latest health/maintenance info
+    };
 
     socket.on("plantMetrics", handleMetrics);
     socket.on("recommendations", handleRecs);
+    socket.on("maintenanceInfo", handleMaintenance);
 
     return () => {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
       socket.off("plantMetrics", handleMetrics);
       socket.off("recommendations", handleRecs);
+      socket.off("maintenanceInfo", handleMaintenance);
     };
-  }, [socket, plantId]);
+  }, [socket, plant_id]);
 
   const humanTime = (ts) => {
     try {
@@ -76,14 +85,14 @@ export default function LiveDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br mt-16  from-gray-100 via-gray-50 to-gray-100 p-6 font-sans">
+    <div className="min-h-screen bg-gradient-to-br mt-16 from-gray-100 via-gray-50 to-gray-100 p-6 font-sans">
       <div className="max-w-7xl mx-auto">
-        <header className="flex flex-col  justify-between mb-8 text-center">
+        <header className="flex flex-col justify-between mb-8 text-center">
           <h1 className="text-4xl font-extrabold text-blue-500 mb-2 md:mb-0 text-center">
             Cement Plant Live Updates
           </h1>
           <span
-            className={`px-4 py-1 rounded-full font-semibold text-sm   text-left w-28  ${
+            className={`px-4 py-1 rounded-full font-semibold text-sm w-28 ${
               connected ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
             }`}
           >
@@ -103,12 +112,19 @@ export default function LiveDashboard() {
               <MetricCard label="Prod Rate (t/h)" value={latest?.productionRate ?? "-"} color="from-pink-400 to-pink-600" />
             </div>
 
-            
-            <div className="mt-4"> <h3 className="font-medium mb-2">Temperature (last {MAX_POINTS} samples)</h3>
-             <Sparkline data={metrics.map((m) => m.temperature ?? 0)} /> </div>
-              <div className="mt-4"> <h3 className="font-medium mb-2">Raw stream (latest)</h3>
-               <pre className="text-xs bg-gray-100 p-2 rounded">{JSON.stringify(latest, null, 2)}</pre> 
-               </div>
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Temperature (last {MAX_POINTS} samples)</h3>
+              <Sparkline data={metrics.map((m) => m.temperature ?? 0)} />
+            </div>
+
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Latest Maintenance / Health</h3>
+              {latestHealth ? (
+                <PlantHealthCard plant={latestHealth} />
+              ) : (
+                <div className="text-gray-500">Waiting for health data...</div>
+              )}
+            </div>
           </section>
 
           {/* Recommendations */}
@@ -116,7 +132,7 @@ export default function LiveDashboard() {
             <div className="bg-white rounded-3xl shadow p-6">
               <h2 className="text-xl font-semibold mb-4">Recommendations</h2>
               <div className="space-y-3">
-                {recs.length === 0 && <div className="text-sm  text-gray-500">No recommendations yet.</div>}
+                {recs.length === 0 && <div className="text-sm text-gray-500">No recommendations yet.</div>}
                 {recs.map((r, i) => (
                   <Recommendation key={i} rec={r} />
                 ))}
@@ -152,4 +168,26 @@ function Recommendation({ rec }) {
     </div>
   );
 }
-function Sparkline({ data = [], width = 600, height = 80 }) { const ref = useRef(null); useEffect(() => { const canvas = ref.current; if (!canvas) return; const ctx = canvas.getContext("2d"); ctx.clearRect(0, 0, width, height); if (data.length === 0) return; const max = Math.max(...data); const min = Math.min(...data); const range = max - min || 1; ctx.beginPath(); data.forEach((v, i) => { const x = (i / (data.length - 1 || 1)) * width; const y = height - ((v - min) / range) * height; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke(); }, [data, width, height]); return <canvas ref={ref} width={width} height={height} className="w-full" />; }
+
+function Sparkline({ data = [], width = 600, height = 80 }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, width, height);
+    if (data.length === 0) return;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min || 1;
+    ctx.beginPath();
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1 || 1)) * width;
+      const y = height - ((v - min) / range) * height;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }, [data, width, height]);
+  return <canvas ref={ref} width={width} height={height} className="w-full" />;
+}
