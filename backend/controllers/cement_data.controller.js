@@ -89,7 +89,7 @@ const registerCementPlant = async (req, res) => {
 
     // Create JWT and set cookie
     const token = jwt.sign({ id: newPlant._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.cookie("token", token, { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie("token", token, { httpOnly: true,secure:true,sameSite:"none", maxAge: 7 * 24 * 60 * 60 * 1000 });
 
     return res.status(201).json({ message: "Cement Plant registered successfully", plant: newPlant });
   } catch (err) {
@@ -108,8 +108,8 @@ const registerCementPlant = async (req, res) => {
 
     const   plant = await CementPlant.findOne({
        $or: [
-         { _id: identifier },
-         { organizationEmail: identifier }
+         { organizationEmail: identifier },
+         { _id: mongoose.Types.ObjectId.isValid(identifier) ? identifier:null},
        ]
      });
  
@@ -132,12 +132,11 @@ const registerCementPlant = async (req, res) => {
     );
 
     // Send token in HTTP-only cookie
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    res.cookie("token", token, {
+       httpOnly: true,
+       secure: true, // Required when sameSite is 'none'
+       sameSite: "none", // Allow cookies across domains
+       maxAge: 7 * 24 * 60 * 60 * 1000,
       })
       .status(200)
       .json({
