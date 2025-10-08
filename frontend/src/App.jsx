@@ -5,7 +5,7 @@ import Navbar from './components/Navbar';
 import Login from './components/Login';
 import { Toaster } from 'react-hot-toast';
 
-const PredictEnergy= lazy(() => import("./pages/predictEnergy"));
+const PredictEnergy= lazy(() => import("./pages/PredictEnergy"));
 const Layout= lazy(() => import("./pages/Layout"));
 const CementPlantRegister= lazy(() => import("./pages/RegisterCementPlant"));
 const CementPlant= lazy(() => import("./pages/CementPlant"));
